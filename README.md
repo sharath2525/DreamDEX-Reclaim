@@ -1,175 +1,356 @@
-# DreamDEX Reclaim
+<p align="center">
+  <img src="./public/logo.svg" alt="DreamDEX Reclaim logo" width="92" />
+</p>
 
-**Settlement recovery for DreamDEX Event Contracts.** Find every settled market a wallet
-never claimed, see exactly how each one resolved, and redeem them all in one transaction.
+<h1 align="center">DreamDEX Reclaim</h1>
 
-Built for the **Somnia × DreamDEX Event Contracts Hackathon** on the Somnia Shannon testnet.
+<p align="center">
+  <strong>Settlement recovery and oracle auditing for DreamDEX Event Contracts.</strong><br />
+  Find winnings a wallet has not collected, verify how each market resolved, and prepare SDK-compatible batch-redemption candidates.
+</p>
 
----
+Built for the **Somnia × DreamDEX Event Contracts Hackathon** on Somnia Shannon testnet.
 
-## The problem
+> DreamDEX Reclaim is an independent hackathon project. The public demo is read-only,
+> testnet tUSDC has no customer-dollar value, and no private key is required to explore a wallet.
 
-Event Contracts settle on a schedule and then leave the live market list. From the
-DreamDEX docs, `Gotchas` #10:
+## The problem it solves
 
-> `loadMarkets()` will not show you a settled market … the registry sweep behind
-> `loadMarkets()` skips finalized binaries — so filtering it for inactive rows returns
-> nothing and a redeem-by-scan bot reports no winnings while real ones sit unclaimed.
+Prediction-market discovery and settlement recovery are different jobs.
+DreamDEX's normal live-market flow is designed for markets that users can still trade. Once
+a binary Event Contract is finalized, it can disappear from that live list even when an
+address still holds winning outcome tokens. A product that only scans currently listed
+markets can therefore report nothing while a valid redemption remains uncollected.
 
-So a winning position stops appearing anywhere. There is no UI surface that shows it, no
-notification, and no reminder. The money is there, redeemable, and invisible.
+This creates three concrete user problems:
 
-This is not a corner case. Measured on Shannon testnet on 2026-09-11:
+1. **Discovery:** a holder may not know which finalized markets still contain value.
+2. **Trust:** seeing a payout is not enough; the holder needs to understand the oracle
+   answer, payout vector, timing, and resolution transaction.
+3. **Collection:** claimable positions must be transformed into correctly shaped
+   `redeemMany` entries without losing voided-market legs or mixing market identifiers.
 
-| Metric | Value |
-|---|---|
-| Binary markets on testnet | 10,000+ (26 live, 9,974 finalized in the first page) |
-| Non-zero outcome-token holdings | **31,981** across **8,081** addresses |
-| Wallets holding unclaimed winnings | **6,912** |
-| Total unclaimed | **13,588,395 tUSDC** |
-| Median claim | 2,400 tUSDC |
-| Settlement latency (expiry → resolved) | p50 **0s**, p90 1s, p99 6s |
-| Void rate | 0.12% (12 of 9,974) |
+DreamDEX Reclaim gives those post-settlement tasks a dedicated interface.
 
-Settlement is instant and reliable. Collection is entirely on the user, and nothing helps
-them do it.
+## What the project does
 
-Reproduce any row: `curl -s localhost:4173/api/network`.
+Paste any Somnia address to get a settlement-recovery workspace:
 
-## What it does
+- **Unclaimed winnings** — finalized positions whose outcome balance still maps to a
+  non-zero payout, sorted by estimated tUSDC value.
+- **Settlement audit** — the question, winning outcome, payout vector, resolution timing,
+  oracle answer, gas charged, transaction, and a valid oracle-explorer link when available.
+- **Live exposure** — outcome-token positions on markets that have not finalized yet.
+- **Redemption history** — positions already collected, separated from balances that may
+  still need action.
+- **Network view** — an aggregate testnet snapshot showing the scale and distribution of
+  indexed unclaimed balances.
+- **SDK compatibility check** — `client.getClaimable(address)` output converted to a
+  `trader.redeemMany({ entries })`-shaped plan, with the SDK's current completeness limit
+  shown explicitly.
+- **Share and export** — every successful wallet scan gets a reusable `?address=` URL and
+  a one-click JSON recovery report for evidence, debugging, or handoff.
 
-Paste any wallet address. No connection, no signature, nothing to install.
+The public interface never asks for a wallet connection and never signs a transaction.
+The server-side module supports redemption only when an operator deliberately configures
+a matching private key.
 
-1. **Unclaimed winnings** — every settled market still holding redeemable outcome tokens,
-   with the payout vector applied, sorted by value.
-2. **Settlement audit** — click any row to trace it: the question, the oracle answer, the
-   reactivity callback, the payout vector, the gas charged, and a deep link to the oracle
-   explorer showing each price source, its receipt, and the median.
-3. **Live exposure** — open positions on markets still trading, with time to close.
-4. **Already claimed** — redemption history, so you can see what has been collected.
-5. **Network view** — the chain-wide picture: who is owed what, ranked.
+## User flow
 
-Redemption is a single batched `trader.redeemMany({ entries })` call, using exactly the
-entries `client.getClaimable()` returns.
+```text
+Paste wallet address
+        │
+        ├── discover indexed outcome balances
+        │      ├── finalized + winning payout → Unclaimed
+        │      ├── active market             → Live exposure
+        │      └── redemption event          → Already claimed
+        │
+        ├── select a finalized market
+        │      └── join Market → OracleBind → OracleQuestion/Answer
+        │          → explain settlement and link to the oracle explorer
+        │
+        └── run optional SDK compatibility check
+               └── preview redeemMany-shaped candidates; sign only if configured
+```
 
-## Why it works: two read paths
+## Why it matters to DreamDEX
 
-| Path | What | Speed |
+Reclaim turns the end of the Event Contract lifecycle into a user-facing product surface.
+That can improve the ecosystem in four ways:
+
+- recover value that would otherwise remain unnoticed;
+- bring users back after settlement and create repeat engagement;
+- make oracle-driven outcomes easier to verify rather than asking users to trust a label;
+- reveal SDK and documentation edge cases with reproducible evidence that can improve the
+  integration experience for every builder.
+
+## Measured testnet evidence
+
+The UI includes this dated submission snapshot so the story appears immediately while a
+live network refresh runs independently.
+
+| Shannon testnet metric | Snapshot on 2026-09-11 |
+|---|---:|
+| Binary markets inspected | 10,000+ |
+| Non-zero outcome-balance rows | 31,981 |
+| Addresses represented | 8,081 |
+| Addresses with an indexed claim | 6,912 |
+| Estimated unclaimed testnet value | 13,588,395 tUSDC |
+| Median estimated claim | 2,400 tUSDC |
+| Resolution latency | p50 0s · p90 1s · p99 6s |
+| Voided finalized markets | 12 of 9,974 (0.12%) |
+
+These are **testnet observations, not financial claims**. The state changes over time and
+the numbers should be refreshed through `GET /api/network` before being quoted elsewhere.
+The measurements suggest that settlement itself is fast; the remaining gap is discovery,
+explanation, and collection.
+
+## DreamDEX and Somnia integration
+
+### Read path
+
+The fast wallet view queries the DreamDEX indexer and joins `OutcomeBalance` records to
+their `Market` records. Pure payout-classification code then determines whether each
+position is active, losing, voided, already redeemed, or still redeemable.
+
+### Settlement-audit path
+
+The market's `oracleQuestionId` is a 256-bit question key, not the small numeric question
+number accepted by the oracle-explorer route. The verified join is:
+
+```text
+Market.id → OracleBind.market_id → OracleBind.oracleQuestionId → OracleQuestion
+```
+
+Keeping that identifier as a string prevents JavaScript precision loss. The resulting
+audit view combines the oracle record, resolution event, payout vector, and cost data.
+For synthetic pricefeed markets without an `OracleBind` row, the UI omits the explorer
+link instead of producing a broken one.
+
+### SDK and redemption path
+
+`@somnia-chain/markets-sdk` v0.30.0 provides:
+
+- `client.getClaimable(address)` for candidate discovery;
+- `trader.redeemMany({ entries })` for batched redemption.
+
+In this SDK version, `getClaimable()` is itself indexer-backed and its portfolio query is
+limited to 200 outcome-balance rows. It is therefore presented as a **bounded compatibility
+check**, not an independent on-chain source or proof of completeness. For an active wallet,
+the complete paginated indexer scan can materially exceed the SDK result.
+
+Before executing a production redemption flow, page the full balance set, confirm every
+candidate against current contract state, and then submit. The implementation preserves
+both legs of a voided market and refuses to sign when the requested address does not match
+the configured private key.
+
+See [SDK and documentation feedback](./docs/SDK-FEEDBACK.md) for the queries, examples,
+and proposed fixes behind these findings.
+
+## Correctness decisions
+
+- **Key all UI state by `marketId`.** Binary pools can be recycled across market windows;
+  a pool address is not a durable market identifier.
+- **Derive collateral decimals.** Shannon tUSDC uses 6 decimals while mainnet USDso uses
+  18. Hardcoding one side silently creates a factor-of-10¹² error.
+- **Keep 256-bit identifiers as strings.** JavaScript `Number` cannot preserve a 77-digit
+  oracle question key.
+- **Apply the payout vector.** A non-zero outcome-token balance is not automatically a
+  winning balance; the finalized payout vector determines value.
+- **Preserve both voided legs.** A void can pay both outcomes, so collapsing to one side
+  loses redeemable value.
+- **Expose source limitations.** The indexer and SDK panels describe what they prove and
+  what they do not prove.
+
+## Architecture
+
+| Layer | File | Responsibility |
 |---|---|---|
-| **Indexer** `dev.smk.somnia.host` | `OutcomeBalance ⋈ Market` GraphQL | ~1.5s per wallet |
-| **SDK** `client.getClaimable()` | reads the chain directly, authoritative | ~31s for a heavy wallet |
+| Interface | `public/index.html` | Address-first dashboard, audit view, SDK comparison, dated network snapshot |
+| Branding | `public/logo.svg` | Reusable project logo and browser icon |
+| HTTP/API | `src/server.mjs` | Static server, validation, routes, caching, concurrent-request deduplication |
+| Indexer | `src/indexer.mjs` | GraphQL queries, pagination, joins, normalization, pure payout classification |
+| SDK/write path | `src/sdk.mjs` | Claimable-candidate lookup, payload construction, signer/account safeguards |
+| Vercel adapter | `api/*.js` | Native serverless GET routes that reuse the shared API logic |
+| Tests | `test/payout.test.mjs` | Payout, decimal, void, identifier, and classification edge cases |
 
-`getClaimable()` is correct but batched per position with no pagination — one wallet, one
-call, 31,573 ms. It cannot back a UI. So Reclaim uses the indexer for discovery and the
-SDK as the authority consulted immediately before signing. Both numbers are shown, so
-they can be cross-checked. Click **Cross-check on-chain** to see the SDK's own answer and
-the `redeemMany` payload it produces.
+The browser has no build step and the API server uses Node's built-in HTTP module. The
+DreamDEX SDK and `viem` are the only runtime dependencies.
 
-That ~20× gap, and what to do about it, is finding #2 in
-[SDK-FEEDBACK.md](./SDK-FEEDBACK.md).
+## Run locally
 
-## Settlement transparency
-
-The docs recommend surfacing the oracle explorer and no submitted project does. Following
-the docs literally produces a dead link: `Market.oracleQuestionId` is a 77-digit 256-bit
-`questionKey` for most testnet markets, and routing it through `Number()` yields
-`6.96e+75`. The join that works goes through `OracleBind`:
-
-```
-Market.id ──> OracleBind.market_id ──> OracleBind.oracleQuestionId ──> OracleQuestion
-```
-
-Verified on market `0x…019d3b`:
-
-```
-question        ETH closes at or above its opening price
-questionNumber  53949
-explorer        https://prd.oracle.somnia.host/questions/53949?view=graph   (200 OK)
-oracle answer   numericValue 245752, interval ">= 0.00"
-payout          Up 0 · Down 1  →  winning outcome Down
-settled in      1s
-resolution cost 1,957,530 gas · 0.02105271 SOMI charged
-```
-
-Full write-up, including the two traps inside that join: [SDK-FEEDBACK.md](./SDK-FEEDBACK.md) §1.
-
-## Run it
+Requirements: Node.js 20 or newer and network access to the Somnia/DreamDEX testnet
+services.
 
 ```bash
+git clone <repository-url>
+cd DreamDEX-Reclaim
 npm install
-npm start            # http://localhost:4173
-npm test             # 16 tests over the payout/claim logic
+npm start
 ```
 
-No `.env` needed. The indexer is public and every read path is unauthenticated.
+Open [http://localhost:4173](http://localhost:4173).
 
-### Endpoints
+To open a wallet directly, append its address:
 
-```
-GET /api/address?address=0x…      wallet: claimable, live, lost, redemption history
-GET /api/resolution?marketId=0x…  full settlement audit trail for one market
-GET /api/sdk?address=0x…          authoritative chain read + redeemMany payload (slow, ~30s)
-GET /api/network                  full chain scan, ~50s, cached 2 min
-GET /api/fees                     per-venue fee schedule
-GET /api/health
+```text
+http://localhost:4173/?address=0xfe7250509634abb94b3cdbd72eb122feccac157c
 ```
 
-### Executing a redemption
-
-Read-only by default — nothing signs without a key. To execute:
+No `.env` file is needed for the read-only application. Useful commands:
 
 ```bash
-PRIVATE_KEY=0x… npm start
+npm start          # start the UI and API on port 4173
+npm test           # run the 16 payout and classification tests
 ```
 
-Redemption runs through `trader.redeemMany()`. Every entry `getClaimable()` returns is
-passed, including both legs of a voided market, because a void pays 0.5 on each side and
-there is no winning outcome to infer.
+## Configuration and signing safety
 
-## Project layout
+Copy `.env.example` only if you intentionally need server-side signing.
 
+| Variable | Required | Purpose |
+|---|---|---|
+| `PORT` | No | HTTP port; defaults to `4173` |
+| `PRIVATE_KEY` | No | Enables server-side redemption for the matching account |
+
+Never commit a private key. When `PRIVATE_KEY` is absent, the SDK path returns a plan only.
+When present, the signer address must equal the address passed into the redemption call or
+the module throws `ACCOUNT_MISMATCH`.
+
+## API reference
+
+| Method and path | Returns |
+|---|---|
+| `GET /api/address?address=0x…` | Claimable positions, live exposure, losing/finalized positions, and redemption history for one wallet |
+| `GET /api/resolution?marketId=0x…` | Settlement and oracle audit data for one market |
+| `GET /api/sdk?address=0x…` | Bounded SDK candidates and a `redeemMany`-shaped preview |
+| `GET /api/network` | Full indexed network scan; cached for two minutes |
+| `GET /api/fees` | Per-venue fee schedule; cached for five minutes |
+| `GET /api/health` | Service health and timestamp |
+
+Example:
+
+```bash
+curl "http://localhost:4173/api/address?address=0xfe7250509634abb94b3cdbd72eb122feccac157c"
 ```
-src/indexer.mjs    read-only GraphQL client + pure payout classification
-src/sdk.mjs        write path: getClaimable, redeemMany plan, redeem
-src/server.mjs     zero-dependency HTTP server and API
-public/index.html  the whole UI, no build step
-test/payout.test.mjs
+
+The network scan is deliberately separate from wallet lookup because it is much heavier.
+Concurrent requests for the same expensive route share one in-flight operation instead of
+launching duplicate scans.
+
+## Optional redemption module
+
+The included write-path code is not exposed as a public HTTP mutation. That is deliberate:
+a public demo should not accept secret keys or create transactions on behalf of visitors.
+An operator who configures `PRIVATE_KEY` can invoke the server-side library's redemption
+function, which validates the account and calls `trader.redeemMany({ entries })`.
+
+This is a reference integration, not a custody design. A production consumer application
+should add browser-wallet signing, transaction simulation, a final confirmation screen,
+and post-transaction receipt tracking.
+
+## Tests
+
+```bash
+npm test
 ```
 
-The payout logic is pure and unit-tested — 16 tests covering the payout vector, the
-voided case, the 6-vs-18 decimal trap, and the identifier overflow that breaks oracle
-links. Nothing in `test/` re-implements product code; it imports it.
+The 16 tests import the real payout/classification functions and cover:
 
-## Design notes
+- Up and Down winners;
+- losing and zero balances;
+- voided markets and two-leg redemption;
+- 6-decimal versus 18-decimal collateral;
+- finalized/live classification;
+- very large oracle identifiers and precision safety.
 
-- **No build step.** One HTML file, inline CSS, no framework. Judges should not have to
-  run a bundler to see the product.
-- **Key state by `marketId`, never by pool address.** Pools are recycled across windows
-  (`Gotchas` #12); confirmed in the data.
-- **Derive decimals, never hardcode.** Testnet tUSDC is 6 decimals, mainnet USDso is 18 —
-  a factor of 10^12 that misprices everything silently.
-- **256-bit identifiers stay strings.** `Number()` on a 77-digit questionKey loses every
-  digit past the 17th. There is a test for this.
-- **Show both read paths.** When two sources can answer, show both and let the user
-  check. Trust is the product.
+## Deployment
 
-## What is not done
+### Docker
 
-- **No wallet connect.** The demo is address-first by design — it works on any wallet
-  including one you do not own, which is what makes it demonstrable. Signing is
-  server-side via `PRIVATE_KEY`. A browser-wallet path is the obvious next step.
-- **No mainnet.** Addresses are identical across testnet and mainnet (CREATE3), so the
-  switch is a config change — but the collateral decimals differ by 10^12 and that has
-  not been exercised against mainnet.
-- **Synthetic pricefeed markets have no audit link.** 375 of one sample wallet's 472
-  settled markets are `"Pricefeed test:"` markets with a 256-bit questionKey and no
-  `OracleBind` row. They show no audit link rather than a dead one.
+```bash
+docker build -t dreamdex-reclaim .
+docker run --rm -p 4173:4173 dreamdex-reclaim
+```
 
-## Links
+### Vercel
 
-- [DreamDEX Event Contracts docs](https://docs.dreamdex.io/developers/event-contracts)
-- [`@somnia-chain/markets-sdk`](https://www.npmjs.com/package/@somnia-chain/markets-sdk) 0.30.0
+`vercel.json` routes API requests to the exported Node handler and includes the public
+assets. The dated snapshot makes the first screen useful even if the full network scan
+exceeds a serverless execution window; per-wallet lookup and resolution audit remain
+separate operations.
+
+## Project structure
+
+```text
+DreamDEX-Reclaim/
+├── api/                           # Vercel-native serverless route adapters
+├── public/
+│   ├── index.html                # complete browser interface
+│   └── logo.svg                  # project logo and favicon
+├── src/
+│   ├── indexer.mjs               # read and classification path
+│   ├── sdk.mjs                   # SDK plan and optional redemption path
+│   └── server.mjs                # HTTP server and API routes
+├── test/
+│   └── payout.test.mjs           # 16 unit tests
+├── docs/
+│   ├── HACKATHON-SUBMISSION.md   # DoraHacks submission copy
+│   ├── DEMO-SCRIPT.md            # 2–3 minute demo plan
+│   └── SDK-FEEDBACK.md           # reproducible SDK/docs findings
+├── .env.example
+├── Dockerfile
+├── package.json
+└── vercel.json
+```
+
+Generated dependencies such as `node_modules/` are ignored by Git and are not part of the
+project source.
+
+## Hackathon judging fit
+
+| Criterion | How DreamDEX Reclaim addresses it |
+|---|---|
+| Innovation and originality | Treats post-settlement recovery and oracle audit as a product, rather than building another market list or trading bot |
+| Technical implementation | Uses Event Contract balances, market payouts, resolution/oracle joins, the official SDK candidate flow, and batched-redemption payloads |
+| User experience and design | Requires only an address, separates claims/live/history, and explains every resolution before action |
+| Business and ecosystem impact | Can recover dormant engagement, increase successful redemptions, and improve trust in Event Contract outcomes |
+| Presentation and demo | Provides dated evidence, ready-to-scan test wallets, a visible audit trail, and an honest SDK comparison |
+
+In a review of 98 listed hackathon entries, no other submission title or public summary was
+centered on both post-settlement recovery and oracle-level audit. That is a positioning
+observation, not a guarantee of judging outcome.
+
+## Current limitations
+
+- Shannon testnet only; mainnet collateral and configuration have not been exercised.
+- Public UI is read-only; browser-wallet signing is not implemented.
+- The SDK v0.30.0 compatibility result can be incomplete for wallets with more than 200
+  outcome-balance rows.
+- Network-wide scanning is slower than a wallet lookup and may not fit every serverless
+  timeout.
+- Synthetic pricefeed markets without an `OracleBind` record cannot link to the oracle
+  explorer; the app reports that limitation rather than inventing a URL.
+
+## Roadmap
+
+1. Add non-custodial browser-wallet redemption with simulation and receipt tracking.
+2. Replace the bounded SDK discovery path when a paginated or contract-authoritative API
+   becomes available.
+3. Add notifications for newly settled claimable positions.
+4. Add mainnet configuration with explicit collateral-decimal validation.
+5. Persist historical network snapshots to measure recovered value and repeat usage.
+
+## Project documents
+
+- [Hackathon submission copy](./docs/HACKATHON-SUBMISSION.md)
+- [2–3 minute demo script](./docs/DEMO-SCRIPT.md)
+- [SDK and documentation feedback](./docs/SDK-FEEDBACK.md)
+
+## External resources
+
+- [DreamDEX Event Contracts documentation](https://docs.dreamdex.io/developers/event-contracts)
 - [DreamDEX Bot Kit](https://github.com/somnia-chain/dreamdex-bot-kit)
-- [Oracle explorer](https://prd.oracle.somnia.host/questions/53949?view=graph)
+- [`@somnia-chain/markets-sdk`](https://www.npmjs.com/package/@somnia-chain/markets-sdk)
 - [Somnia Shannon explorer](https://shannon-explorer.somnia.network/)
-- [SDK & documentation feedback report](./SDK-FEEDBACK.md)
+- [DreamDEX oracle explorer example](https://prd.oracle.somnia.host/questions/53949?view=graph)

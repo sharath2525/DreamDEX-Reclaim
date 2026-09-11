@@ -2,15 +2,16 @@
  * sdk.mjs — the write path. Redemption goes through @somnia-chain/markets-sdk,
  * the only supported developer surface for Event Contracts.
  *
- * `client.getClaimable(account)` is the authoritative on-chain answer and its output is
- * shaped to feed `trader.redeemMany({ entries })` directly. We use the indexer for the
- * fast UI read and this for the real claim, so the numbers the user sees before signing
- * are the numbers the SDK itself will act on.
+ * `client.getClaimable(account)` returns rows shaped to feed
+ * `trader.redeemMany({ entries })` directly. In SDK 0.30.0 it is built from an
+ * indexer-backed portfolio query capped at 200 outcome-balance rows. Reclaim therefore
+ * exposes it as a bounded SDK compatibility check, not as a complete on-chain authority.
  *
  * Nothing here signs unless a private key is configured.
  */
 import { SomniaMarkets, SOMNIA_TESTNET_ADDRESSES } from "@somnia-chain/markets-sdk";
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
+import { privateKeyToAccount } from "viem/accounts";
 
 export const SDK_CONFIG = {
   indexerUrl: "https://dev.smk.somnia.host/v1/graphql",
@@ -30,9 +31,8 @@ export function exchange() {
 }
 
 /**
- * Authoritative claimable positions for an address, straight from the chain.
- * Returns both the rows and how long the chain read took, because that latency is
- * the whole reason the indexer fast-path exists.
+ * SDK-derived claimable positions for an address. This is intentionally labelled
+ * bounded: the SDK's portfolio query selects at most 200 outcome-balance rows.
  */
 export async function getClaimable(account) {
   const started = Date.now();
@@ -42,6 +42,9 @@ export async function getClaimable(account) {
   return {
     ms,
     count: positions.length,
+    bounded: true,
+    portfolioRowLimit: 200,
+    source: "markets-sdk 0.30.0 (indexer-backed portfolio query)",
     rawEstPayoutTotal: rawTotal.toString(),
     positions: positions.map((p) => ({
       marketId: p.marketId,
@@ -64,7 +67,7 @@ export async function buildRedeemPlan(account) {
   const entries = positions.map((p) => ({
     marketId: p.marketId,
     outcomeIdx: p.outcomeIdx,
-    amount: p.amount ?? 0n,
+    amount: BigInt(p.amount ?? "0"),
   }));
   return { entries, positions, ms };
 }
@@ -92,6 +95,14 @@ export async function redeem(account, { dryRun = true } = {}) {
   if (!PRIVATE_KEY) {
     const err = new Error("PRIVATE_KEY is not set — refusing to sign.");
     err.code = "NO_SIGNER";
+    throw err;
+  }
+  const signerAccount = privateKeyToAccount(PRIVATE_KEY).address;
+  if (signerAccount.toLowerCase() !== account.toLowerCase()) {
+    const err = new Error(
+      `Configured signer ${signerAccount} does not match requested account ${account}; refusing to submit another wallet's redemption plan.`,
+    );
+    err.code = "ACCOUNT_MISMATCH";
     throw err;
   }
   const signer = new SomniaMarkets({ ...SDK_CONFIG, privateKey: PRIVATE_KEY });

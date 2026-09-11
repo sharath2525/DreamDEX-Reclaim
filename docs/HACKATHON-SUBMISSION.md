@@ -13,18 +13,18 @@ DreamDEX Reclaim
 ## One-line summary
 
 ```
-Settlement recovery for DreamDEX Event Contracts — find every settled market your wallet
-never claimed, see exactly how each one resolved, and redeem them all in one transaction.
+Settlement recovery for DreamDEX Event Contracts — find settled winnings a wallet missed,
+audit each resolution, and prepare SDK-compatible batched claims.
 ```
 
 ## Short description (if the form has one)
 
 ```
-Event Contracts settle on schedule and then leave the live market list, so a winning
-position stops appearing anywhere. On Shannon testnet right now 6,892 wallets are holding
-13.56M tUSDC they can redeem and have no way to find. Reclaim scans any address's on-chain
-outcome balances, shows what is claimable with the payout vector applied, traces each
-resolution back through the oracle, and redeems in one batched call.
+Event Contracts settle on schedule and then leave the live market list, so a naive scan
+misses winning positions. A 2026-09-11 Shannon snapshot indexed more than 6,900 wallets
+with about 13.5M testnet tUSDC in winning, non-zero outcome balances. Reclaim scans any
+address, applies the stored payout vector, traces resolution through the oracle, and
+prepares SDK-compatible batch candidates without asking for a wallet connection.
 ```
 
 ## Detailed description
@@ -41,31 +41,32 @@ live list. The docs say it plainly in `Gotchas` #10:
 > `loadMarkets()` skips finalized binaries — so filtering it for inactive rows returns
 > nothing and a redeem-by-scan bot reports no winnings while real ones sit unclaimed.
 
-A winning position therefore stops appearing in any UI. No badge, no notification, no
-reminder. The collateral is there, redeemable, and invisible.
+A winning position therefore disappears from a naive live-market scan. Recovery is easy
+to miss, and users lack a focused settlement-audit workflow.
 
 Settlement itself is not the problem. Measured across 9,974 settled testnet markets:
 **p50 = 0 seconds** from expiry to resolved, p90 = 1s, p99 = 6s, void rate 0.12%. The
-reactivity-driven resolution path is fast and reliable. **Collection is entirely on the
-user, and nothing helps them do it.**
+reactivity-driven resolution path is fast and reliable. **The remaining gap is making
+discovery and resolution evidence understandable.**
 
 The scale on Shannon testnet, measured 2026-09-11:
 
 | Metric | Value |
 |---|---|
-| Non-zero outcome-token holdings | 31,906 across 8,085 addresses |
-| Wallets holding unclaimed winnings | **6,892** |
-| Total unclaimed | **13,564,410 tUSDC** |
+| Non-zero outcome-token holdings | 31,981 across 8,081 addresses |
+| Wallets holding unclaimed winnings | **6,912** |
+| Total unclaimed | **13,588,395 tUSDC** |
 | Median claim | 2,400 tUSDC |
 
-Every number is served live by `GET /api/network` and reproduced from the public indexer.
+These are testnet/indexer figures, not real-dollar customer assets. The live endpoint
+refreshes them, so small changes after this dated snapshot are expected.
 
 ## The product
 
 Paste a wallet address. No wallet connection, no signature, nothing to install — which
 also means it works on an address you do not own, and that is what makes it demonstrable.
 
-1. **Unclaimed winnings** — every settled market still holding redeemable outcome tokens,
+1. **Unclaimed winnings** — settled markets still holding winning outcome tokens,
    payout vector applied, sorted by value, with contracts and per-contract payout shown.
 2. **Settlement audit** — click any row to trace the resolution: the question, the oracle
    answer and the interval it chose, the reactivity callback, the payout vector, the gas
@@ -75,25 +76,25 @@ also means it works on an address you do not own, and that is what makes it demo
 4. **Already claimed** — redemption history from `RedemptionRecord`.
 5. **Network view** — the chain-wide picture, ranked by what each wallet is owed.
 
-Redemption is one batched `trader.redeemMany({ entries })` call using exactly the entries
-`client.getClaimable()` returns. Read-only by default; nothing signs without a key.
+The public demo is read-only. Its server-side write module can pass SDK-returned candidates
+to `trader.redeemMany({ entries })` when the requested address matches a configured key.
 
 ## How it uses Event Contracts
 
-The SDK's `client.getClaimable()` is the best-designed seam on the Event Contracts surface
-— it returns rows already shaped as `redeemMany()` input. It is also unusable as a read
-path: **one wallet, one call, 31,573 ms**, batched per position with no pagination.
+The SDK's `client.getClaimable()` has an excellent output shape for `redeemMany()`. But in
+SDK 0.30.0 it is built from an indexer portfolio query capped at the 200 largest
+outcome-balance rows, with no truncation flag. It can therefore be slow and incomplete.
 
 So Reclaim runs two read paths and shows both:
 
 | Path | What it reads | Speed |
 |---|---|---|
 | Indexer GraphQL | `OutcomeBalance ⋈ Market` | ~1.5s per wallet |
-| `client.getClaimable()` | the chain, authoritative | ~31s for a heavy wallet |
+| `client.getClaimable()` | bounded SDK/indexer candidate set | 31–82s observed |
 
-~20× on the same question. Indexer for discovery, SDK as the authority consulted
-immediately before signing. The **Cross-check on-chain** button runs the SDK live and
-displays its own answer next to the indexer's, plus the `redeemMany` payload it produced.
+Reclaim pages the indexer for discovery and labels the SDK result as bounded. The
+**Check SDK candidates** button demonstrates the official output shape and exposes the
+200-row limitation rather than presenting a partial result as on-chain confirmation.
 
 Indexer tables used: `OutcomeBalance`, `Market`, `RedemptionRecord`, `OracleBind`,
 `OracleQuestion`, `OracleAnswer`, `MarketResolutionEvent`, `MarketVenue`. SDK surface
@@ -102,7 +103,7 @@ used: `client.getClaimable`, `trader.redeemMany`, `SomniaMarkets`, `somniaShanno
 
 ## Settlement transparency
 
-The docs recommend surfacing the oracle explorer; no other submission does. Following the
+The docs recommend surfacing the oracle explorer; Reclaim makes that path first-class. Following the
 docs literally produces a dead link — `Market.oracleQuestionId` is a 77-digit 256-bit
 `questionKey` on most testnet markets, and `Number()` turns it into `6.96e+75`. The join
 that works goes through `OracleBind`. Verified on market `0x…019d3b`:
@@ -135,10 +136,10 @@ Settlement transparency is the largest trust gap in prediction markets. Showing 
 
 ## Ecosystem impact
 
-This is the retention layer, not another trading terminal. Every other tool in this
-ecosystem helps you get *into* a position; nothing helps you get your money *out*.
+This is a retention layer, not another trading terminal. Most hackathon entries focus on
+entry, forecasting, or automation; Reclaim focuses on what happens after settlement.
 
-- **Direct:** recovers capital that is currently stranded, for any wallet.
+- **Direct:** discovers winning balances and prepares a transparent recovery path.
 - **Trust:** settlement transparency converts "I think I won" into a verifiable audit
   trail — the precondition for larger positions.
 - **Adoption:** an address-first tool with no wallet connection is the lowest-friction
@@ -160,8 +161,8 @@ ecosystem helps you get *into* a position; nothing helps you get your money *out
 
 ## Feedback report
 
-Submitted as `SDK-FEEDBACK.md`. Five findings, each with the query that reproduces it:
-the broken oracle-explorer join, `getClaimable` latency, indexer ergonomics, a version
+Submitted as [`docs/SDK-FEEDBACK.md`](./SDK-FEEDBACK.md). Five findings, each with the query that reproduces it:
+the broken oracle-explorer join, `getClaimable` completeness and latency, indexer ergonomics, a version
 pin conflict between the docs and the official starter template, and several
 undocumented sentinel values. Also records what worked well, because `Gotchas` #10, #11
 and #12 each saved real bugs.

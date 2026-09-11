@@ -1,13 +1,13 @@
 # Demo video script — 2:45
 
-Target: 2 minutes 45 seconds. Judges are watching 93 of these. The first 20 seconds decide
+Target: 2 minutes 45 seconds. The live field reached 98 submissions. The first 20 seconds decide
 whether they keep watching, so the problem is stated with a number before any product
 appears.
 
 **Recording checklist before you start**
 
 ```bash
-cd dreamdex-reclaim
+cd DreamDEX-Reclaim
 npm start                                  # http://localhost:4173
 curl -s localhost:4173/api/network > /dev/null   # warm the cache — the scan takes ~50s
 ```
@@ -29,9 +29,10 @@ Record at 1080p. Hide bookmarks bar. Use a clean profile so no extensions bleed 
 
 **Do:** the hero stats are already loaded. Point at them.
 
-> Six thousand eight hundred and ninety-two wallets are holding thirteen and a half
-> million tUSDC they can redeem today — and there is no screen in the product that shows
-> it to them. Median claim: twenty-four hundred.
+> In a September eleventh testnet snapshot, more than sixty-nine hundred wallets held
+> about thirteen and a half million testnet tUSDC in winning, non-zero outcome balances.
+> These are testnet figures, not customer dollars. The point is the size of the recovery
+> surface. Median indexed claim: twenty-four hundred tUSDC.
 
 ---
 
@@ -46,8 +47,8 @@ Record at 1080p. Hide bookmarks bar. Use a clean profile so no extensions bleed 
 
 **Screen:** results land in about two seconds. Let them sit for a beat.
 
-> This wallet has won two hundred and twenty-nine markets. It has never redeemed a single
-> one — zero redemptions on record. Forty-six thousand tUSDC is sitting there.
+> This wallet has hundreds of winning rows and no redemption record. The exact total is
+> live indexer data, so I will use the number shown on screen rather than a stale script.
 >
 > And notice it is still trading: seven live markets, fourteen hundred contracts open.
 > This is an active trader, not an abandoned account.
@@ -94,21 +95,19 @@ panel opens below.
 
 ## 1:30 – 2:05 · The engineering (Technical Implementation is 25% — spend the time)
 
-**Do:** click **Cross-check on-chain**. It takes ~30 seconds, so keep talking over it.
+**Do:** click **Check SDK candidates**. It can take over a minute, so warm this response
+before recording or use a lighter wallet.
 
-> The SDK already has the right primitive: `client.getClaimable()` returns rows shaped
-> directly as `redeemMany()` input. Good design.
->
-> It is also unusable as a read path. One wallet, one call — thirty-one seconds, batched
-> per position, no pagination. So Reclaim runs two paths: the indexer for discovery at
-> about a second and a half, the SDK as the authority consulted right before signing.
+> The SDK has the right primitive: `client.getClaimable()` returns rows shaped directly
+> as `redeemMany()` input. But in version zero point thirty it builds that result from an
+> indexer portfolio query capped at two hundred holdings, with no truncation flag.
+> Reclaim pages the indexer for discovery and labels this SDK result as bounded.
 
 **Do:** the SDK panel resolves. Point at the two numbers.
 
-> There it is — one hundred and two positions confirmed on-chain, and the exact
-> `redeemMany` payload it produced. One transaction redeems all of them, including both
-> legs of any voided market, because a void pays a half on each side and there is no
-> winning outcome to infer.
+> There it is: the candidate subset returned by the official SDK and its `redeemMany`
+> payload shape. This is not independent on-chain confirmation, and it may be incomplete
+> for an active wallet. Exposing that limitation is one of our high-severity SDK findings.
 >
 > Sixteen unit tests cover the payout logic: the payout vector, the void case, the
 > six-versus-eighteen decimal trap between testnet and mainnet, and the identifier
@@ -123,8 +122,8 @@ panel opens below.
 > This is the whole chain: thirty-one thousand holdings, eight thousand addresses,
 > thirteen and a half million tUSDC unclaimed.
 >
-> Every other tool in this ecosystem helps you get *into* a position. Nothing helps you
-> get your money *out*. This is the retention layer.
+> Most tools in this ecosystem focus on getting into a position. Reclaim focuses on the
+> post-settlement recovery and trust layer.
 >
 > Same core, four products: a Telegram claim bot that pushes instead of pulls, browser
 > wallet connect, mainnet — the addresses are identical, so it is a config change — and a
@@ -147,7 +146,8 @@ panel opens below.
 
 - **Do not narrate the code.** Show one table and one audit panel. Judges reward the
   product working, not the file tree.
-- **Say the numbers out loud.** 6,892 wallets. 13.56 million. 31 seconds versus 1.5.
+- **Say the dated numbers honestly.** More than 6,900 wallets. About 13.5 million testnet
+  tUSDC. SDK result capped at 200 holdings.
   Specific figures are what survive a judging discussion.
 - **If the SDK cross-check is slow on camera, leave it running.** A spinner you keep
   talking over reads as "this is really hitting the chain." A spinner you cut away from

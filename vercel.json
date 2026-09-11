@@ -1,5 +1,14 @@
 {
-  "version": 2,
-  "builds": [{ "src": "src/server.mjs", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "src/server.mjs" }]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/address.js": { "maxDuration": 60 },
+    "api/fees.js": { "maxDuration": 60 },
+    "api/health.js": { "maxDuration": 60 },
+    "api/network.js": { "maxDuration": 60 },
+    "api/resolution.js": { "maxDuration": 60 },
+    "api/sdk.js": { "maxDuration": 60 }
+  }
 }

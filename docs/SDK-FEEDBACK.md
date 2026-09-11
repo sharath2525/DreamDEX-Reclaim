@@ -35,7 +35,7 @@ because the docs actively point the wrong way.
 | # | Severity | Finding |
 |---|----------|---------|
 | 1 | **High** | The oracle-explorer deep link in the docs does not work. `Market.oracleQuestionId` is not the explorer's question number. |
-| 2 | **High** | `client.getClaimable()` takes ~31s for one wallet. It cannot back a UI. |
+| 2 | **High** | `client.getClaimable()` is slow and silently incomplete above 200 outcome-balance rows. |
 | 3 | Medium | The indexer has no aggregates, and every variable must be explicitly declared *and* correctly typed. |
 | 4 | Medium | The official starter template pins `^0.28.1`; the docs require `>= 0.29.0`; latest is `0.30.0`. |
 | 5 | Low | Several indexer tables contain duplicate rows and undocumented sentinel values. |
@@ -122,44 +122,49 @@ that works.
 
 ---
 
-## 2. `client.getClaimable()` is too slow to put behind a UI
+## 2. `client.getClaimable()` is bounded and can silently omit claims
 
 This is the single most useful method on the Event Contracts surface and the one a
-recovery product is built on. It is also unusable as a read path.
+recovery product is built on. Its output shape is excellent, but SDK 0.30.0 builds it
+from `BinaryPortfolio.getPortfolio()`, whose GraphQL query hard-codes:
 
-Two calls to the same wallet, twenty minutes apart:
-
-```
-client.getClaimable("0xfe7250509634abb94b3cdbd72eb122feccac157c")
-  -> 102 claimable positions   31,573 ms
-  -> 107 claimable positions   41,596 ms      (same wallet, later — more had settled)
-```
-
-Roughly 390 ms per position. It is batched per position against the chain, with no
-pagination, no `limit`, and no incremental mode. A wallet with 400 settled markets is
-looking at ~2.6 minutes, and there is no way to ask for the first 20.
-
-The same answer from the indexer takes **~1.5s** and scales to the whole chain in ~50s:
-
-```
-GET /api/address?address=0xfe72…   ->  218 claimable legs, 1.76s
-full chain scan, 31,906 rows       ->  50.3s
+```graphql
+OutcomeBalance(
+  where: { account: { _eq: $acct }, balance: { _gt: "0" } }
+  order_by: { balance: desc }
+  limit: 200
+)
 ```
 
-That is a ~20× gap per wallet, and it widens with wallet size rather than staying flat. I shipped both paths: the indexer for discovery,
-`getClaimable()` as the authority you consult immediately before signing. That is the right
-architecture, but nothing in the docs suggests it, so a builder will hit the 31s wall,
-assume their own code is wrong, and lose an evening to it.
+That limit is not exposed in `getClaimable()`, and the result has no truncation flag.
+An active wallet can therefore receive a valid-looking but incomplete redemption list.
+
+Measured on the same demo wallet on 2026-09-11:
+
+```
+complete OutcomeBalance scan  -> 275 winning rows / 53,443.702 tUSDC
+client.getClaimable(...)      -> 108 candidates   / 21,600.000 tUSDC / 81,860 ms
+```
+
+The SDK result is not an independent on-chain cross-check: its portfolio leg reads the
+same indexer and then fetches fees for winning markets. The per-market work also makes
+the call slow; observed latency ranged from roughly 31 to 82 seconds for this wallet.
+
+The complete address-scoped indexer read is much faster:
+
+```
+GET /api/address?address=0xfe72…   ->  all non-zero holdings in a few seconds
+```
+
+Reclaim now labels `getClaimable()` as a bounded SDK compatibility check. It does not
+describe the result as complete or authoritative.
 
 **Suggested fixes, cheapest first:**
 
-1. Document the latency and recommend the indexer for reads. One sentence in `Recipes`
-   would do it.
-2. Add `{ limit, offset }` or a cursor to `getClaimable()`, and return the total count.
-3. Batch the underlying reads instead of one round-trip per position. A multicall over
-   the binary pools should bring a 400-market wallet under a second.
-4. Consider exposing `getClaimable` as a React hook with the indexer fast-path built in
-   and the chain read as a `refetch`. That is what every consumer app will hand-roll.
+1. Remove the hard-coded 200-row cap, or page `OutcomeBalance` internally.
+2. Add `{ limit, offset }` or a cursor and return `total` plus `truncated`.
+3. Document that the method is indexer-backed; do not imply an on-chain balance sweep.
+4. Batch or cache the per-market fee reads to reduce latency.
 
 The output shape is already correct for `redeemMany` — `marketId` / `outcomeIdx` /
 `amount` / `estPayout` / `status`. That part needs no change.
@@ -276,7 +281,7 @@ build:
 ## Reproduce
 
 ```bash
-git clone <this repo> && cd dreamdex-reclaim
+git clone <this repo> && cd DreamDEX-Reclaim
 npm install
 npm test          # 16 tests, pure payout/claim classification logic
 npm start         # http://localhost:4173

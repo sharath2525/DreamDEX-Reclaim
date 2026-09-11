@@ -2,9 +2,9 @@
  * indexer.mjs — read-only access to the Somnia Markets indexer (Envio/Hasura GraphQL).
  *
  * This is the fast path. DreamDEX's own `client.getClaimable()` answers from the chain
- * and is authoritative, but it is batched per-position and takes tens of seconds for a
- * heavy wallet. We use the indexer for instant discovery and the SDK for the actual
- * redemption — see src/sdk.mjs.
+ * but SDK 0.30.0 builds that answer from an indexer portfolio query capped at 200
+ * holdings. We use complete paginated indexer discovery and expose the SDK path only as
+ * a bounded compatibility check — see src/sdk.mjs.
  */
 
 export const TESTNET_INDEXER = "https://dev.smk.somnia.host/v1/graphql";
@@ -115,7 +115,7 @@ export class Indexer {
    * The only path that works is Market.id -> OracleBind.market_id -> OracleBind.oracleQuestionId.
    * Joining Market.oracleQuestionId to OracleQuestion.questionKey does NOT work: the former is a
    * decimal 256-bit integer and the latter a hex string, and they are different values, not two
-   * encodings of the same one. Verified against live testnet rows. See SDK-FEEDBACK.md.
+   * encodings of the same one. Verified against live testnet rows. See docs/SDK-FEEDBACK.md.
    */
   async questionNumberFor(marketId) {
     const data = await this.gql(
@@ -297,7 +297,7 @@ export function classifyBalance(row) {
     question: market?.question ?? null,
     status: market?.clobStatus ?? null,
     expiry: market ? num(market.expiry) : null,
-    // 256-bit questionKey — must stay a string, see the docs erratum in SDK-FEEDBACK.md.
+    // 256-bit questionKey — must stay a string, see the docs erratum in docs/SDK-FEEDBACK.md.
     oracleQuestionKey: market ? rawStr(market.oracleQuestionId) : null,
     decimals,
   };
@@ -357,7 +357,7 @@ export function summarise(rows) {
  * Takes the question NUMBER (OracleQuestion.oracleQuestionId — a small counter like
  * "54113"), NOT Market.oracleQuestionId, which is a 77-digit 256-bit questionKey.
  * Refuses the hash form rather than emitting a dead link, because the two fields share
- * a name and silently produce a 2.55e+75 URL when confused. See SDK-FEEDBACK.md.
+ * a name and silently produce a 2.55e+75 URL when confused. See docs/SDK-FEEDBACK.md.
  */
 export function oracleExplorerUrl(questionNumber) {
   if (questionNumber == null) return null;

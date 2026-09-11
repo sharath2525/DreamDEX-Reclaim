@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Settlement recovery cockpit for DreamDEX Event Contracts on Somnia — find and redeem unclaimed winnings.",
+  "description": "Settlement recovery cockpit for DreamDEX Event Contracts on Somnia — find, audit, and prepare claims for unclaimed winnings.",
   "scripts": {
     "start": "node src/server.mjs",
-    "scan": "node src/scan.mjs",
-    "test": "node --test test/"
+    "test": "node --test test/payout.test.mjs"
   },
   "dependencies": {
     "@somnia-chain/markets-sdk": "^0.30.0",

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DreamDEX Reclaim — settlement recovery for Event Contracts</title>
 <meta name="description" content="Find and redeem unclaimed winnings on DreamDEX Event Contracts. Paste a wallet, see every settled market you never claimed, and see exactly how each one resolved." />
+<meta name="theme-color" content="#08090c" />
+<link rel="icon" href="/logo.svg" type="image/svg+xml" />
 <style>
   :root{
     --bg:#08090c; --panel:#0e1116; --panel2:#12161d; --line:#1e242e; --line2:#2a323f;
@@ -25,7 +27,7 @@
   header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b0e13,#08090c);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
   .bar{display:flex;align-items:center;gap:14px;height:58px}
   .logo{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em}
-  .mark{width:22px;height:22px;flex:0 0 auto}
+  .mark{width:26px;height:26px;flex:0 0 auto}
   .pill{font-size:11px;padding:3px 8px;border:1px solid var(--line2);border-radius:99px;color:var(--dim);font-family:var(--mono)}
   .spacer{flex:1}
   nav a{color:var(--dim);font-size:13px;margin-left:18px}
@@ -122,11 +124,7 @@
 <header>
   <div class="wrap bar">
     <div class="logo">
-      <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="#ffc861" stroke-width="1.4"/>
-        <path d="M7 15.5 L10.5 9 L14 13 L17 7.5" stroke="#3ddc97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="17" cy="7.5" r="1.9" fill="#ffc861"/>
-      </svg>
+      <img class="mark" src="/logo.svg" alt="" />
       DreamDEX Reclaim
     </div>
     <span class="pill">Somnia Shannon · testnet 50312</span>
@@ -146,15 +144,17 @@
     <p class="lede">
       DreamDEX Event Contracts settle on schedule and the settled market leaves the live list — so a winning
       position quietly stops appearing anywhere in the UI. <b>Reclaim</b> scans any wallet's on-chain outcome
-      balances, finds every settled market still holding redeemable tokens, and shows exactly how each one
-      resolved before you sign a single batch redemption.
+      balances, finds settled markets still holding redeemable tokens, and shows exactly how each one
+      resolved before you prepare a batch redemption.
     </p>
 
     <div class="lookup" id="lookup">
       <input id="addr" type="text" spellcheck="false" autocomplete="off"
              placeholder="0x… paste any wallet address" />
       <button class="btn" id="go">Scan wallet</button>
-      <button class="btn ghost" id="sdk">Cross-check on-chain</button>
+      <button class="btn ghost" id="sdk">Check SDK candidates</button>
+      <button class="btn ghost" id="share" disabled>Copy share link</button>
+      <button class="btn ghost" id="export" disabled>Export report</button>
     </div>
     <div class="chips" id="chips"><span class="sub" style="padding:5px 0">Try:</span></div>
 
@@ -191,17 +191,17 @@
       </div>
 
       <div class="card">
-        <h2>Two read paths, cross-checked <span class="count">by design</span></h2>
+        <h2>Two read paths, compared <span class="count">limitations shown</span></h2>
         <div class="ledger">
           <div class="step"><span class="dot on"></span><div><div class="t">Fast path — indexer GraphQL</div>
             <div class="d">dev.smk.somnia.host · OutcomeBalance ⋈ Market · ~1-2s</div></div></div>
-          <div class="step"><span class="dot on"></span><div><div class="t">Authority — markets-sdk</div>
-            <div class="d">client.getClaimable(account) reads the chain directly · ~30s for a heavy wallet</div></div></div>
+          <div class="step"><span class="dot warn"></span><div><div class="t">SDK compatibility — markets-sdk</div>
+            <div class="d">client.getClaimable(account) is indexer-backed and capped at 200 holdings in SDK 0.30.0</div></div></div>
           <div class="step"><span class="dot on"></span><div><div class="t">Write path — trader.redeemMany</div>
-            <div class="d">one batched transaction for every claimable leg, voided legs included</div></div></div>
+            <div class="d">batch-ready SDK candidates, with both voided legs preserved</div></div></div>
         </div>
-        <div class="note">The SDK's <code>getClaimable</code> output is already shaped as <code>redeemMany</code>
-          input. Reclaim shows you that exact payload before anything is signed.</div>
+        <div class="note">The SDK's <code>getClaimable</code> rows are shaped as <code>redeemMany</code>
+          input, but the bounded SDK result may be a subset for active wallets. Reclaim shows that limitation instead of calling it authoritative.</div>
       </div>
     </div>
   </section>
@@ -222,6 +222,19 @@
 
 <script>
 const $ = (s) => document.querySelector(s);
+const NETWORK_SNAPSHOT = {
+  date: "2026-09-11",
+  totalClaimableUsd: 13588395,
+  addressesWithClaims: 6912,
+  medianClaimUsd: 2400,
+  scannedRows: 31981,
+  demoAddresses: [
+    "0xfe7250509634abb94b3cdbd72eb122feccac157c",
+    "0xdea90069362e9e9f2aee89b6e8fe0671ef3518b6",
+    "0x1d2b9b3dbb7a0da9e99b6191dc372cee64d4dfab",
+  ],
+};
+let lastWalletReport = null;
 const fmtUsd = (n) => n >= 1000 ? n.toLocaleString(undefined,{maximumFractionDigits:0}) : n.toFixed(2);
 const fmtC  = (n) => n.toLocaleString(undefined,{maximumFractionDigits:2});
 const short = (a) => a ? a.slice(0,6)+"…"+a.slice(-4) : "—";
@@ -238,6 +251,20 @@ async function jget(url){
 }
 
 /* ------------------------------ network ------------------------------ */
+function showNetworkSnapshot(){
+  const d = NETWORK_SNAPSHOT;
+  $("#s-total").textContent = fmtUsd(d.totalClaimableUsd);
+  $("#s-wallets").textContent = d.addressesWithClaims.toLocaleString();
+  $("#s-median").textContent = fmtUsd(d.medianClaimUsd);
+  $("#s-rows").textContent = d.scannedRows.toLocaleString();
+  $("#s-latency").textContent = "0s";
+  $("#net-count").textContent = `dated snapshot · ${d.date}`;
+  $("#net-body").innerHTML = `<div class="note">Showing the dated submission snapshot immediately while a live full-network refresh runs separately. Testnet tUSDC is not real-dollar customer capital.</div>`;
+  $("#chips").innerHTML = '<span class="sub" style="padding:5px 0">Try:</span>' +
+    d.demoAddresses.map(a=>`<span class="chip" data-load="${esc(a)}">${short(a)}</span>`).join("");
+  document.querySelectorAll("#chips [data-load]").forEach(b => b.onclick = () => scan(b.dataset.load));
+}
+
 async function loadNetwork(){
   try{
     const d = await jget("/api/network");
@@ -266,7 +293,7 @@ async function loadNetwork(){
       d.top.slice(0,4).map(e=>`<span class="chip" data-load="${esc(e.account)}">${short(e.account)}</span>`).join("");
     document.querySelectorAll("#chips [data-load]").forEach(b => b.onclick = () => scan(b.dataset.load));
   }catch(err){
-    $("#net-body").innerHTML = `<div class="err">network scan failed: ${esc(err.message)}</div>`;
+    $("#net-body").innerHTML = `<div class="note">Live full-network refresh is unavailable; the dated ${NETWORK_SNAPSHOT.date} submission snapshot remains visible above. Wallet lookup and settlement audit are independent of this refresh.</div>`;
   }
 }
 
@@ -274,15 +301,68 @@ async function loadNetwork(){
 async function scan(address){
   address = (address || $("#addr").value).trim().toLowerCase();
   if(!/^0x[0-9a-f]{40}$/.test(address)){ $("#result").innerHTML = `<div class="card"><div class="err">that is not a 0x… 40-hex-char address</div></div>`; return; }
+  lastWalletReport = null;
+  $("#share").disabled = true;
+  $("#export").disabled = true;
   $("#addr").value = address;
   $("#result").innerHTML = `<div class="card"><div class="loading"><span class="spin"></span>Scanning ${esc(address)} across every Event Contract market…</div></div>`;
   $("#result").scrollIntoView({behavior:"smooth", block:"start"});
   try{
     const d = await jget("/api/address?address="+address);
+    lastWalletReport = d;
+    const shareUrl = new URL(location.href);
+    shareUrl.searchParams.set("address", address);
+    history.replaceState(null, "", shareUrl);
+    $("#share").disabled = false;
+    $("#export").disabled = false;
     renderWallet(d);
   }catch(err){
     $("#result").innerHTML = `<div class="card"><div class="err">${esc(err.message)}</div></div>`;
   }
+}
+
+async function copyShareLink(){
+  if(!lastWalletReport) return;
+  const button = $("#share");
+  try{
+    await navigator.clipboard.writeText(location.href);
+    button.textContent = "Link copied";
+  }catch{
+    const field = $("#addr");
+    field.focus();
+    field.select();
+    button.textContent = "Address selected";
+  }
+  setTimeout(() => { button.textContent = "Copy share link"; }, 1600);
+}
+
+function exportReport(){
+  const d = lastWalletReport;
+  if(!d) return;
+  const report = {
+    schema: "dreamdex-reclaim/recovery-report-v1",
+    generatedAt: new Date().toISOString(),
+    account: d.account,
+    network: d.network,
+    source: d.source,
+    totals: d.totals,
+    claimablePositions: d.claimableRows,
+    livePositions: d.live,
+    alreadyClaimed: d.alreadyClaimed,
+    disclosure: "Testnet evidence only. SDK candidate checks may be bounded; verify current contract state before any write.",
+  };
+  const blob = new Blob([JSON.stringify(report, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `dreamdex-reclaim-${d.account.slice(2,10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  const button = $("#export");
+  button.textContent = "Report exported";
+  setTimeout(() => { button.textContent = "Export report"; }, 1600);
 }
 
 function renderWallet(d){
@@ -319,8 +399,7 @@ function renderWallet(d){
       </tbody></table>
       <div class="note">Every row is auditable — <code>audit ↗</code> opens the oracle explorer for that market's
       question, showing each price source, its receipt, the median and the interval chosen. Redeem with one batched
-      <code>trader.redeemMany({ entries })</code> call; the entries are exactly what <code>client.getClaimable()</code>
-      returns. Set <code>PRIVATE_KEY</code> to execute — this build is read-only by default.</div>
+      <code>trader.redeemMany({ entries })</code> batches. The public build is read-only and does not ask for a private key.</div>
     </div>` : "";
 
   const live = d.live.length ? `<div class="card">
@@ -371,7 +450,7 @@ async function audit(marketId){
       <h2>Settlement audit <span class="count">${d.oracleExplorer?`<a href="${d.oracleExplorer}" target="_blank" rel="noopener">oracle explorer ↗</a>`:""}</span></h2>
       <div class="ledger">${rows.join("")}</div>
       <div class="note">Question number comes from <code>OracleBind</code>, not from <code>Market.oracleQuestionId</code>
-      (a 77-digit 256-bit questionKey — the explorer needs the counter). Full write-up in SDK-FEEDBACK.md.</div>
+      (a 77-digit 256-bit questionKey — the explorer needs the counter). Full write-up in <code>docs/SDK-FEEDBACK.md</code>.</div>
     </div>`;
   }catch(err){
     box.innerHTML = `<div class="card" style="margin-top:16px"><div class="err">audit failed: ${esc(err.message)}</div></div>`;
@@ -385,20 +464,19 @@ async function sdkCheck(){
   const box = document.createElement("div");
   box.className = "card";
   box.style.marginTop = "16px";
-  box.innerHTML = `<div class="loading"><span class="spin"></span>Reading the chain via markets-sdk <code>client.getClaimable()</code> — this is batched per position and takes ~30s for a heavy wallet…</div>`;
+  box.innerHTML = `<div class="loading"><span class="spin"></span>Running the SDK's bounded <code>client.getClaimable()</code> compatibility check…</div>`;
   $("#result").prepend(box);
   try{
     const d = await jget("/api/sdk?address="+address);
     const usd = Number(d.rawEstPayoutTotal)/1e6;
-    box.innerHTML = `<h2><span class="tag up">ON-CHAIN</span> SDK cross-check <span class="count">${d.ms} ms</span></h2>
+    box.innerHTML = `<h2><span class="tag gold">BOUNDED</span> SDK compatibility check <span class="count">${d.ms} ms</span></h2>
       <div class="ledger">
-        <div class="step"><span class="dot on"></span><div><div class="t">${d.count} claimable positions confirmed on-chain</div>
-          <div class="d">client.getClaimable("${esc(address)}") · est. payout ${fmtUsd(usd)} tUSDC raw</div></div></div>
-        <div class="step"><span class="dot ${d.signerReady?"on":"warn"}"></span><div><div class="t">redeemMany payload prepared (${d.plan.entries} entries)</div>
-          <div class="d">${d.signerReady?"signer configured — one transaction redeems all of them":"no PRIVATE_KEY set — plan only, nothing will be signed"}${d.plan.sampleEntry?` · first entry {marketId ${esc(String(d.plan.sampleEntry.marketId).slice(0,14))}…, outcomeIdx ${d.plan.sampleEntry.outcomeIdx}, amount ${esc(String(d.plan.sampleEntry.amount))}}`:""}</div></div></div>
+        <div class="step"><span class="dot warn"></span><div><div class="t">${d.count} redemption candidates returned by the SDK</div>
+          <div class="d">client.getClaimable("${esc(address)}") · estimated payout ${fmtUsd(usd)} tUSDC · source: SDK/indexer</div></div></div>
+        <div class="step"><span class="dot ${d.signerReady?"on":"warn"}"></span><div><div class="t">redeemMany candidate payload prepared (${d.plan.entries} entries)</div>
+          <div class="d">${d.signerReady?"server signer configured":"public demo is read-only — nothing will be signed"}${d.plan.sampleEntry?` · first entry {marketId ${esc(String(d.plan.sampleEntry.marketId).slice(0,14))}…, outcomeIdx ${d.plan.sampleEntry.outcomeIdx}, amount ${esc(String(d.plan.sampleEntry.amount))}}`:""}</div></div></div>
       </div>
-      <div class="note">Indexer read ≈1-2s for the same answer. That 20× gap is why Reclaim uses the indexer for
-      discovery and the SDK for the claim.</div>`;
+      <div class="note">SDK 0.30.0 caps its portfolio query at 200 outcome-balance rows. This panel proves SDK payload compatibility, not completeness or independent on-chain agreement.</div>`;
   }catch(err){
     box.innerHTML = `<div class="err">SDK check failed: ${esc(err.message)}</div>`;
   }
@@ -406,15 +484,15 @@ async function sdkCheck(){
 
 $("#go").onclick = () => scan();
 $("#sdk").onclick = sdkCheck;
+$("#share").onclick = copyShareLink;
+$("#export").onclick = exportReport;
 $("#addr").addEventListener("keydown", e => { if(e.key === "Enter") scan(); });
 
-/* boot: real numbers, then a real wallet */
-loadNetwork().then(async () => {
-  try{
-    const d = await jget("/api/network");
-    if (d.top?.length) scan(d.top[0].account);
-  }catch(_){}
-});
+/* boot: show dated evidence immediately, then run the live paths independently */
+showNetworkSnapshot();
+const linkedAddress = new URLSearchParams(location.search).get("address");
+scan(/^0x[0-9a-fA-F]{40}$/.test(linkedAddress || "") ? linkedAddress : NETWORK_SNAPSHOT.demoAddresses[0]);
+loadNetwork();
 </script>
 </body>
 </html>

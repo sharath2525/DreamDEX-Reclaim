@@ -3,8 +3,9 @@
  *
  * Two data paths, deliberately:
  *   /api/address  -> indexer GraphQL (fast, ~1-2s) for discovery and display
- *   /api/sdk      -> markets-sdk client.getClaimable (slow, ~30s) as the authority
- * The UI shows both so the numbers can be cross-checked.
+ *   /api/sdk      -> markets-sdk client.getClaimable compatibility check
+ * SDK 0.30.0 builds that result from an indexer-backed portfolio query capped at 200
+ * outcome-balance rows, so it is deliberately labelled as bounded rather than authoritative.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -30,15 +31,20 @@ const MIME = {
 };
 
 const cache = new Map(); // key -> { at, ttl, value }
+const inflight = new Map(); // key -> Promise; avoid multiplying an expensive full scan
 function memo(key, ttlMs, fn) {
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < hit.ttl) return Promise.resolve(hit.value);
-  return Promise.resolve()
+  if (inflight.has(key)) return inflight.get(key);
+  const pending = Promise.resolve()
     .then(fn)
     .then((value) => {
       cache.set(key, { at: Date.now(), ttl: ttlMs, value });
       return value;
-    });
+    })
+    .finally(() => inflight.delete(key));
+  inflight.set(key, pending);
+  return pending;
 }
 
 const isAddress = (s) => typeof s === "string" && /^0x[0-9a-fA-F]{40}$/.test(s);
@@ -157,23 +163,27 @@ async function handleSdk(account) {
   }
   const { getClaimable } = await import("./sdk.mjs");
   try {
-    // One chain read, not two: getClaimable is the slow part (~30s) and a dry run would
-    // otherwise repeat it to build the same plan.
-    const authoritative = await getClaimable(account);
-    const entries = authoritative.positions.map((p) => ({
+    // One SDK read, not two. In v0.30.0 this is an indexer-backed portfolio query whose
+    // OutcomeBalance leg is capped at 200 rows; it is useful as an SDK compatibility
+    // check, but must not be presented as a complete or on-chain authority result.
+    const sdkResult = await getClaimable(account);
+    const entries = sdkResult.positions.map((p) => ({
       marketId: p.marketId, outcomeIdx: p.outcomeIdx, amount: p.amount,
     }));
     return {
       status: 200,
       body: {
         account,
-        ...authoritative,
+        ...sdkResult,
         plan: {
           entries: entries.length,
           dryRun: true,
           sampleEntry: entries[0] ?? null,
-          note: "shaped exactly as trader.redeemMany({ entries }) input",
+          note: "SDK-shaped redemption candidates; bounded by the SDK portfolio query",
         },
+        source: "markets-sdk 0.30.0 (indexer-backed portfolio query)",
+        bounded: true,
+        portfolioRowLimit: 200,
         signerReady: Boolean(process.env.PRIVATE_KEY),
       },
     };
@@ -208,7 +218,7 @@ async function handleResolution(marketId) {
         num(res.market.resolvedAtTimestamp) && num(res.market.expiry)
           ? num(res.market.resolvedAtTimestamp) - num(res.market.expiry)
           : null,
-      // The 256-bit questionKey on the market row is NOT the explorer id. See SDK-FEEDBACK.md.
+      // The 256-bit questionKey on the market row is NOT the explorer id. See docs/SDK-FEEDBACK.md.
       oracleQuestionKey: res.market.oracleQuestionId ?? null,
       questionNumber,
       oracleExplorer: oracleExplorerUrl(questionNumber),
@@ -232,7 +242,7 @@ async function handleFees() {
 
 /* -------------------------------- router -------------------------------- */
 
-async function route(url) {
+export async function route(url) {
   const u = new URL(url, "http://x");
   const p = u.pathname;
   if (p === "/api/health") return { status: 200, body: { ok: true, service: "dreamdex-reclaim", ts: Date.now() } };
@@ -255,7 +265,7 @@ function serveStatic(pathname, res) {
   });
 }
 
-export const server = http.createServer(async (req, res) => {
+export async function handler(req, res) {
   const url = req.url ?? "/";
   try {
     if (url.startsWith("/api/")) {
@@ -270,9 +280,13 @@ export const server = http.createServer(async (req, res) => {
     res.writeHead(500, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: err.message }));
   }
-});
+}
+
+export default handler;
+export const createServer = () => http.createServer(handler);
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const server = createServer();
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`DreamDEX Reclaim listening on http://0.0.0.0:${PORT}`);
     console.log(`indexer: ${TESTNET_INDEXER}`);
