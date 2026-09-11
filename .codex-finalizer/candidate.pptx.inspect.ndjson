@@ -1,0 +1,124 @@
+{"kind":"deck","id":"pr/kus52u","name":"Deck"}
+{"kind":"layout","layoutId":"08abb3ca-bb2a-4584-8ad2-881b64331bc3","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"977d157b-735e-4a24-a858-dc4a42be2413","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/68km23","slide":1,"title":"DreamDEX Reclaim","textShapes":5}
+{"kind":"textbox","id":"sh/i5gze5sb","slide":1,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[90,260,1040,88]}
+{"kind":"textbox","id":"sh/36p07a9w","slide":1,"text":"Settlement recovery and oracle auditing for DreamDEX Event Contracts","textPreview":"Settlement recovery and oracle auditing for DreamDEX Event Contracts","textChars":68,"textLines":1,"bbox":[94,365,980,80]}
+{"kind":"textbox","id":"sh/sbi1kfad","slide":1,"text":"Somnia × DreamDEX Event Contracts Hackathon","textPreview":"Somnia × DreamDEX Event Contracts Hackathon","textChars":43,"textLines":1,"bbox":[94,520,720,34]}
+{"kind":"textbox","id":"sh/dcridkry","slide":1,"text":"Read-only public demo on Somnia Shannon testnet","textPreview":"Read-only public demo on Somnia Shannon testnet","textChars":47,"textLines":1,"bbox":[94,558,720,30]}
+{"kind":"textbox","id":"sh/q9gzi5sn","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"image","id":"im/w7i94ra5","slide":1,"name":"","geometry":"roundRect","alt":"DreamDEX Reclaim logo","bbox":[92,100,118,118]}
+{"kind":"notes","id":"nt/68km23","slide":1,"text":"Project source: DreamDEX Reclaim repository and public application."}
+{"kind":"slide","id":"sl/kxbt53","slide":2,"title":"Winning positions can disappear from discovery","textShapes":14}
+{"kind":"textbox","id":"sh/1cfah0rm","slide":2,"text":"Winning positions can disappear from discovery","textPreview":"Winning positions can disappear from discovery","textChars":46,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/e9ob65sb","slide":2,"text":"The live-market experience ends before every holder completes the settlement workflow.","textPreview":"The live-market experience ends before every holder completes the settlement workflow.","textChars":86,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/zaxsfa9w","slide":2,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/c7mt4va5","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"shape","id":"sh/d8vad0rq","slide":2,"bbox":[245,335,790,0]}
+{"kind":"shape","id":"sh/q54b2lsz","slide":2,"bbox":[100,250,300,250]}
+{"kind":"textbox","id":"sh/r6dsbq9k","slide":2,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[124,273,52,54]}
+{"kind":"textbox","id":"sh/w3qtgfa9","slide":2,"text":"Market trades","textPreview":"Market trades","textChars":13,"textLines":1,"bbox":[124,345,250,42]}
+{"kind":"textbox","id":"sh/x4zupkru","slide":2,"text":"The position appears in the live Event Contract list.","textPreview":"The position appears in the live Event Contract list.","textChars":53,"textLines":1,"bbox":[124,406,250,68]}
+{"kind":"shape","id":"sh/xs7e94bm","slide":2,"bbox":[465,250,300,250]}
+{"kind":"textbox","id":"sh/wryd0za1","slide":2,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[489,273,52,54]}
+{"kind":"textbox","id":"sh/vqpw7utg","slide":2,"text":"Market finalizes","textPreview":"Market finalizes","textChars":16,"textLines":1,"bbox":[489,345,250,42]}
+{"kind":"textbox","id":"sh/apgvypsb","slide":2,"text":"The finalized binary leaves normal live discovery.","textPreview":"The finalized binary leaves normal live discovery.","textChars":50,"textLines":1,"bbox":[489,406,250,68]}
+{"kind":"shape","id":"sh/9onu5kbq","slide":2,"bbox":[830,250,300,250]}
+{"kind":"textbox","id":"sh/83edwfa5","slide":2,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[854,273,52,54]}
+{"kind":"textbox","id":"sh/n25c3atk","slide":2,"text":"Winning tokens remain","textPreview":"Winning tokens remain","textChars":21,"textLines":1,"bbox":[854,345,250,42]}
+{"kind":"textbox","id":"sh/m1wvupsz","slide":2,"text":"A holder can still have redeemable outcome tokens.","textPreview":"A holder can still have redeemable outcome tokens.","textChars":50,"textLines":1,"bbox":[854,406,250,68]}
+{"kind":"textbox","id":"sh/tkrehobu","slide":2,"text":"The missing product surface: post-settlement discovery and verification","textPreview":"The missing product surface: post-settlement discovery and verification","textChars":71,"textLines":1,"bbox":[166,555,948,46]}
+{"kind":"notes","id":"nt/kxbt53","slide":2,"text":"Source: dreamDEX Event Contracts recipes and gotchas. https://app.dreamdex.io/docs/developers/event-contracts/recipes and https://app.dreamdex.io/docs/developers/event-contracts/gotchas"}
+{"kind":"slide","id":"sl/ghpvtt","slide":3,"title":"One address opens the recovery workspace","textShapes":10}
+{"kind":"textbox","id":"sh/l4vid0j2","slide":3,"text":"One address opens the recovery workspace","textPreview":"One address opens the recovery workspace","textChars":40,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/y14z2lkr","slide":3,"text":"No wallet connection, authentication, or signature is required for discovery.","textPreview":"No wallet connection, authentication, or signature is required for discovery.","textChars":77,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/j2d0bq1c","slide":3,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/wfmh0b2l","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"textbox","id":"sh/adkzylkf","slide":3,"text":"Address lookup","textPreview":"Address lookup","textChars":14,"textLines":1,"bbox":[940,190,260,34]}
+{"kind":"textbox","id":"sh/bed07610","slide":3,"text":"Scan any Somnia address and classify its indexed outcome-token positions.","textPreview":"Scan any Somnia address and classify its indexed outcome-token positions.","textChars":73,"textLines":1,"bbox":[940,238,270,94]}
+{"kind":"textbox","id":"sh/ob2hwb2p","slide":3,"text":"Immediate evidence","textPreview":"Immediate evidence","textChars":18,"textLines":1,"bbox":[940,370,260,34]}
+{"kind":"textbox","id":"sh/9cbi5gju","slide":3,"text":"The first screen shows a dated network snapshot while live scans run independently.","textPreview":"The first screen shows a dated network snapshot while live scans run independently.","textChars":83,"textLines":1,"bbox":[940,418,270,96]}
+{"kind":"textbox","id":"sh/18by5gja","slide":3,"text":"Share or export","textPreview":"Share or export","textChars":15,"textLines":1,"bbox":[940,552,260,34]}
+{"kind":"textbox","id":"sh/072xcbip","slide":3,"text":"Create a direct wallet URL or download a structured recovery report.","textPreview":"Create a direct wallet URL or download a structured recovery report.","textChars":68,"textLines":1,"bbox":[940,598,270,58]}
+{"kind":"image","id":"im/gnqdkryl","slide":3,"name":"","geometry":"roundRect","alt":"DreamDEX Reclaim address lookup and network evidence","bbox":[72,168,820,470]}
+{"kind":"notes","id":"nt/ghpvtt","slide":3,"text":"Screenshot captured from the local DreamDEX Reclaim application using the demo address 0xfe7250509634abb94b3cdbd72eb122feccac157c."}
+{"kind":"slide","id":"sl/t8b9u9","slide":4,"title":"The wallet view separates every settlement state","textShapes":16}
+{"kind":"textbox","id":"sh/769cral0","slide":4,"text":"The wallet view separates every settlement state","textPreview":"The wallet view separates every settlement state","textChars":48,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/87itkf2l","slide":4,"text":"A non-zero outcome-token balance does not automatically mean a winning claim.","textPreview":"A non-zero outcome-token balance does not automatically mean a winning claim.","textChars":77,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/98butk3q","slide":4,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/u9kbmpkb","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"textbox","id":"sh/vatcvulw","slide":4,"text":"UNCLAIMED","textPreview":"UNCLAIMED","textChars":9,"textLines":1,"bbox":[76,190,220,28]}
+{"kind":"textbox","id":"sh/wb2toz2h","slide":4,"text":"Finalized positions with a non-zero payout, ranked by estimated value.","textPreview":"Finalized positions with a non-zero payout, ranked by estimated value.","textChars":70,"textLines":1,"bbox":[76,228,340,74]}
+{"kind":"textbox","id":"sh/hcbux432","slide":4,"text":"LIVE EXPOSURE","textPreview":"LIVE EXPOSURE","textChars":13,"textLines":1,"bbox":[76,345,220,28]}
+{"kind":"textbox","id":"sh/adgbalk7","slide":4,"text":"Positions in markets that remain open for trading.","textPreview":"Positions in markets that remain open for trading.","textChars":50,"textLines":1,"bbox":[76,383,340,68]}
+{"kind":"textbox","id":"sh/bepsjqls","slide":4,"text":"REDEMPTION HISTORY","textPreview":"REDEMPTION HISTORY","textChars":18,"textLines":1,"bbox":[76,495,270,28]}
+{"kind":"textbox","id":"sh/7ihkvydg","slide":4,"text":"Completed collections stay separate from balances that may still need action.","textPreview":"Completed collections stay separate from balances that may still need action.","textChars":77,"textLines":1,"bbox":[76,533,340,82]}
+{"kind":"shape","id":"sh/6x8jmtwv","slide":4,"bbox":[455,180,753,445]}
+{"kind":"textbox","id":"sh/sjq1o3el","slide":4,"text":"83,108","textPreview":"83,108","textChars":6,"textLines":1,"bbox":[488,444,190,52]}
+{"kind":"textbox","id":"sh/juxkred4","slide":4,"text":"estimated tUSDC","textPreview":"estimated tUSDC","textChars":15,"textLines":1,"bbox":[490,500,190,28]}
+{"kind":"textbox","id":"sh/itoji9wj","slide":4,"text":"427","textPreview":"427","textChars":3,"textLines":1,"bbox":[753,444,120,52]}
+{"kind":"textbox","id":"sh/5wf2tova","slide":4,"text":"claimable markets","textPreview":"claimable markets","textChars":17,"textLines":1,"bbox":[755,500,170,28]}
+{"kind":"textbox","id":"sh/kv61kjep","slide":4,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1021,444,90,52]}
+{"kind":"textbox","id":"sh/vqx0ned8","slide":4,"text":"live positions","textPreview":"live positions","textChars":14,"textLines":1,"bbox":[1023,500,145,28]}
+{"kind":"image","id":"im/25kb21cj","slide":4,"name":"","geometry":"roundRect","alt":"Wallet summary and claimable winnings table","bbox":[475,205,713,191]}
+{"kind":"notes","id":"nt/t8b9u9","slide":4,"text":"Screenshot captured from the local DreamDEX Reclaim application. Values reflect changing Shannon testnet state."}
+{"kind":"slide","id":"sl/cr9daj","slide":5,"title":"Every claim includes a settlement audit","textShapes":10}
+{"kind":"textbox","id":"sh/zepw7ydk","slide":5,"text":"Every claim includes a settlement audit","textPreview":"Every claim includes a settlement audit","textChars":39,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/0fyd03e5","slide":5,"text":"The interface connects the payout to the oracle record and resolution evidence.","textPreview":"The interface connects the payout to the oracle record and resolution evidence.","textChars":79,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/lgre98vq","slide":5,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/mh0v2dwb","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"shape","id":"sh/ni9wbidw","slide":5,"bbox":[72,175,760,430]}
+{"kind":"textbox","id":"sh/9kred8vm","slide":5,"text":"Resolution evidence shown with each finalized position","textPreview":"Resolution evidence shown with each finalized position","textChars":54,"textLines":1,"bbox":[110,530,682,32]}
+{"kind":"shape","id":"sh/2lwvq9w7","slide":5,"bbox":[885,295,245,0]}
+{"kind":"textbox","id":"sh/3m5wzedc","slide":5,"text":"Market.id","textPreview":"Market.id","textChars":9,"textLines":1,"bbox":[872,245,135,42]}
+{"kind":"textbox","id":"sh/nmpcrih0","slide":5,"text":"OracleBind","textPreview":"OracleBind","textChars":10,"textLines":1,"bbox":[1005,245,150,42]}
+{"kind":"textbox","id":"sh/mlgbydgv","slide":5,"text":"OracleQuestion","textPreview":"OracleQuestion","textChars":14,"textLines":1,"bbox":[930,338,210,42]}
+{"kind":"textbox","id":"sh/9orutsz6","slide":5,"text":"This join produces the numeric question identifier required by the oracle explorer.","textPreview":"This join produces the numeric question identifier required by the oracle explorer.","textChars":83,"textLines":1,"bbox":[875,420,300,102]}
+{"kind":"textbox","id":"sh/8nyt0nyl","slide":5,"text":"256-bit identifiers remain strings to prevent precision loss.","textPreview":"256-bit identifiers remain strings to prevent precision loss.","textChars":61,"textLines":1,"bbox":[875,545,300,64]}
+{"kind":"image","id":"im/p8vmxs32","slide":5,"name":"","geometry":"roundRect","alt":"Settlement audit with oracle answer, payout vector, and redemption status","bbox":[90,205,724,282]}
+{"kind":"notes","id":"nt/cr9daj","slide":5,"text":"Sources: DreamDEX Reclaim SDK feedback report and dreamDEX settlement documentation. https://app.dreamdex.io/docs/trading/event-contracts/settlement-and-voids"}
+{"kind":"slide","id":"sl/wrogxw","slide":6,"title":"86% of represented wallets had an indexed claim","textShapes":11}
+{"kind":"textbox","id":"sh/gfit8nyt","slide":6,"text":"86% of represented wallets had an indexed claim","textPreview":"86% of represented wallets had an indexed claim","textChars":47,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/fe9cf2x8","slide":6,"text":"Dated Shannon testnet snapshot from 2026-09-11. Testnet tUSDC has no customer-dollar value.","textPreview":"Dated Shannon testnet snapshot from 2026-09-11. Testnet tUSDC has no customer-dollar value.","textChars":91,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/ed0b6xgn","slide":6,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/tsrudsf2","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"textbox","id":"sh/srit4nyh","slide":6,"text":"13,588,395","textPreview":"13,588,395","textChars":10,"textLines":1,"bbox":[80,208,410,76]}
+{"kind":"textbox","id":"sh/rq9cbixc","slide":6,"text":"estimated unclaimed tUSDC","textPreview":"estimated unclaimed tUSDC","textChars":25,"textLines":1,"bbox":[84,290,360,34]}
+{"kind":"textbox","id":"sh/6pgb2dgr","slide":6,"text":"31,981","textPreview":"31,981","textChars":6,"textLines":1,"bbox":[80,388,260,58]}
+{"kind":"textbox","id":"sh/dobupcfm","slide":6,"text":"non-zero balance rows","textPreview":"non-zero balance rows","textChars":21,"textLines":1,"bbox":[84,451,300,32]}
+{"kind":"textbox","id":"sh/cn2dg7e1","slide":6,"text":"p50 0s","textPreview":"p50 0s","textChars":6,"textLines":1,"bbox":[80,535,260,58]}
+{"kind":"textbox","id":"sh/y1wzuhgj","slide":6,"text":"expiry to resolution","textPreview":"expiry to resolution","textChars":20,"textLines":1,"bbox":[84,598,300,32]}
+{"kind":"textbox","id":"sh/k3ehwryp","slide":6,"text":"6,912 of 8,081 represented addresses","textPreview":"6,912 of 8,081 represented addresses","textChars":36,"textLines":1,"bbox":[635,615,475,30]}
+{"kind":"chart","id":"ch/7ilgjalo","slide":6,"name":"","chartType":"bar","bbox":[525,205,670,390]}
+{"kind":"notes","id":"nt/wrogxw","slide":6,"text":"Source: DreamDEX Reclaim network scan snapshot captured on 2026-09-11. Figures describe Shannon testnet state and change over time."}
+{"kind":"slide","id":"sl/mz8fys","slide":7,"title":"Two read paths with limits shown","textShapes":11}
+{"kind":"textbox","id":"sh/90bitkz6","slide":7,"text":"Two read paths with limits shown","textPreview":"Two read paths with limits shown","textChars":32,"textLines":1,"bbox":[72,46,1060,60]}
+{"kind":"textbox","id":"sh/mx0ji5gv","slide":7,"text":"The product uses each source for the job it can support.","textPreview":"The product uses each source for the job it can support.","textChars":56,"textLines":1,"bbox":[72,108,1090,48]}
+{"kind":"textbox","id":"sh/7yt0rahg","slide":7,"text":"DreamDEX Reclaim","textPreview":"DreamDEX Reclaim","textChars":16,"textLines":1,"bbox":[72,680,260,20]}
+{"kind":"textbox","id":"sh/kbihgfyp","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"shape","id":"sh/lwrip0za","slide":7,"bbox":[255,360,770,0]}
+{"kind":"shape","id":"sh/y90ze5gj","slide":7,"bbox":[80,230,330,285]}
+{"kind":"textbox","id":"sh/za90nah4","slide":7,"text":"Indexer","textPreview":"Indexer","textChars":7,"textLines":1,"bbox":[106,263,275,42]}
+{"kind":"textbox","id":"sh/4rm1szyt","slide":7,"text":"Fast wallet discovery\nOutcomeBalance joined to Market\nPaginated recovery view","textPreview":"Fast wallet discovery | OutcomeBalance joined to Market | Paginated recovery view","textChars":77,"textLines":3,"bbox":[106,330,275,138]}
+{"kind":"shape","id":"sh/5svi14ze","slide":7,"bbox":[470,230,330,285]}
+{"kind":"textbox","id":"sh/x8b6hgz6","slide":7,"text":"Settlement audit","textPreview":"Settlement audit","textChars":16,"textLines":1,"bbox":[496,263,275,42]}
+{"kind":"textbox","id":"sh/c72pobyl","slide":7,"text":"OracleBind resolution join\nPayout vector classification\nOracle explorer evidence","textPreview":"OracleBind resolution join | Payout vector classification | Oracle explorer evidence","textChars":80,"textLines":3,"bbox":[496,330,275,138]}
+{"kind":"shape","id":"sh/bmtof6h0","slide":7,"bbox":[860,230,330,285]}
+{"kind":"textbox","id":"sh/al07m1gv","slide":7,"text":"SDK compatibility","textPreview":"SDK compatibility","textChars":17,"textLines":1,"bbox":[886,263,275,42]}
+{"kind":"textbox","id":"sh/pkr6dwza","slide":7,"text":"getClaimable candidates\nredeemMany payload preview\nPublic demo stays read-only","textPreview":"getClaimable candidates | redeemMany payload preview | Public demo stays read-only","textChars":78,"textLines":3,"bbox":[886,330,275,138]}
+{"kind":"textbox","id":"sh/ojipkryp","slide":7,"text":"SDK v0.30.0 limits its portfolio query to 200 outcome-balance rows. Reclaim labels the result as bounded.","textPreview":"SDK v0.30.0 limits its portfolio query to 200 outcome-balance rows. Reclaim labels the result as bounded.","textChars":105,"textLines":1,"bbox":[150,570,980,54]}
+{"kind":"notes","id":"nt/mz8fys","slide":7,"text":"Source: inspected @somnia-chain/markets-sdk v0.30.0 behavior documented in docs/SDK-FEEDBACK.md. The compatibility path is not presented as independent on-chain authority."}
+{"kind":"slide","id":"sl/uam8qc","slide":8,"title":"A visible recovery path for finalized positions","textShapes":11}
+{"kind":"textbox","id":"sh/vado3yd8","slide":8,"text":"A visible recovery path for finalized positions","textPreview":"A visible recovery path for finalized positions","textChars":47,"textLines":1,"bbox":[88,85,1060,72]}
+{"kind":"textbox","id":"sh/wb6pcjut","slide":8,"text":"User outcome","textPreview":"User outcome","textChars":12,"textLines":1,"bbox":[92,220,240,36]}
+{"kind":"textbox","id":"sh/xcf65ovy","slide":8,"text":"Holders can find indexed winnings that normal live discovery no longer shows.","textPreview":"Holders can find indexed winnings that normal live discovery no longer shows.","textChars":77,"textLines":1,"bbox":[92,270,500,82]}
+{"kind":"textbox","id":"sh/m54n69cb","slide":8,"text":"Ecosystem outcome","textPreview":"Ecosystem outcome","textChars":17,"textLines":1,"bbox":[92,405,280,36]}
+{"kind":"textbox","id":"sh/n6dozedw","slide":8,"text":"DreamDEX gains a clearer post-settlement experience and reproducible SDK feedback.","textPreview":"DreamDEX gains a clearer post-settlement experience and reproducible SDK feedback.","textChars":82,"textLines":1,"bbox":[92,455,500,86]}
+{"kind":"shape","id":"sh/87m58juh","slide":8,"bbox":[700,205,475,350]}
+{"kind":"textbox","id":"sh/98v61ov2","slide":8,"text":"TRY THE PRODUCT","textPreview":"TRY THE PRODUCT","textChars":15,"textLines":1,"bbox":[750,255,370,28]}
+{"kind":"textbox","id":"sh/yhkn29cf","slide":8,"text":"dream-dex-reclaim.vercel.app","textPreview":"dream-dex-reclaim.vercel.app","textChars":28,"textLines":1,"bbox":[745,312,385,48]}
+{"kind":"textbox","id":"sh/zitovud0","slide":8,"text":"SOURCE CODE","textPreview":"SOURCE CODE","textChars":11,"textLines":1,"bbox":[750,407,370,28]}
+{"kind":"textbox","id":"sh/b21gnmh8","slide":8,"text":"github.com/sharath2525/DreamDEX-Reclaim","textPreview":"github.com/sharath2525/DreamDEX-Reclaim","textChars":39,"textLines":1,"bbox":[735,462,405,64]}
+{"kind":"textbox","id":"sh/ah8fehgn","slide":8,"text":"Somnia Shannon testnet","textPreview":"Somnia Shannon testnet","textChars":22,"textLines":1,"bbox":[91,630,360,28]}
+{"kind":"textbox","id":"sh/x4jypcze","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,676,32,22]}
+{"kind":"notes","id":"nt/uam8qc","slide":8,"text":"Live URL: https://dream-dex-reclaim.vercel.app/  Repository: https://github.com/sharath2525/DreamDEX-Reclaim"}
