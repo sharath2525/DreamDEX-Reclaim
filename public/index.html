@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DreamDEX Reclaim — settlement recovery for Event Contracts</title>
+<meta name="description" content="Find and redeem unclaimed winnings on DreamDEX Event Contracts. Paste a wallet, see every settled market you never claimed, and see exactly how each one resolved." />
+<style>
+  :root{
+    --bg:#08090c; --panel:#0e1116; --panel2:#12161d; --line:#1e242e; --line2:#2a323f;
+    --fg:#e8ecf2; --dim:#8b96a8; --dim2:#5f6a7d;
+    --up:#3ddc97; --down:#ff5d73; --gold:#ffc861; --accent:#6ea8ff; --void:#a78bfa;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* header */
+  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b0e13,#08090c);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+  .bar{display:flex;align-items:center;gap:14px;height:58px}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em}
+  .mark{width:22px;height:22px;flex:0 0 auto}
+  .pill{font-size:11px;padding:3px 8px;border:1px solid var(--line2);border-radius:99px;color:var(--dim);font-family:var(--mono)}
+  .spacer{flex:1}
+  nav a{color:var(--dim);font-size:13px;margin-left:18px}
+  nav a:hover{color:var(--fg);text-decoration:none}
+
+  /* hero */
+  .hero{padding:44px 0 30px}
+  h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;letter-spacing:-.028em;margin:0 0 14px;font-weight:680}
+  h1 em{font-style:normal;color:var(--gold)}
+  .lede{color:var(--dim);font-size:16px;max-width:660px;margin:0 0 26px}
+  .lede b{color:var(--fg);font-weight:560}
+
+  /* lookup */
+  .lookup{display:flex;gap:8px;flex-wrap:wrap;max-width:720px}
+  .lookup input{flex:1 1 340px;min-width:0;background:var(--panel);border:1px solid var(--line2);color:var(--fg);
+    padding:13px 14px;border-radius:10px;font-family:var(--mono);font-size:13px;outline:none}
+  .lookup input:focus{border-color:var(--accent)}
+  .lookup input::placeholder{color:var(--dim2)}
+  .btn{background:var(--fg);color:#08090c;border:0;padding:13px 20px;border-radius:10px;font-weight:620;font-size:14px;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:#fff}
+  .btn:disabled{opacity:.45;cursor:progress}
+  .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line2)}
+  .btn.ghost:hover{background:var(--panel2)}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line);background:var(--panel);
+    padding:5px 9px;border-radius:7px;cursor:pointer}
+  .chip:hover{border-color:var(--line2);color:var(--fg)}
+
+  /* stat strip */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:34px 0 0}
+  .stat{background:var(--panel);padding:16px 16px 15px}
+  .stat .k{font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+  .stat .v{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.02em}
+  .stat .v.gold{color:var(--gold)}
+  .stat .n{font-size:11px;color:var(--dim2);margin-top:4px}
+
+  /* panels */
+  section{padding:30px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .card h2{margin:0;padding:15px 18px;font-size:14px;font-weight:620;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:9px}
+  .card h2 .count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);font-weight:400}
+  .empty{padding:34px 18px;text-align:center;color:var(--dim2);font-size:13px}
+
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim2);
+    padding:10px 14px;border-bottom:1px solid var(--line);font-weight:500;white-space:nowrap}
+  td{padding:11px 14px;border-bottom:1px solid #161b23;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#11151c}
+  tr.rowlink:hover{background:#141a24}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .q{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;color:var(--fg)}
+  .sub{font-size:11px;color:var(--dim2);font-family:var(--mono)}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:5px;border:1px solid}
+  .tag.up{color:var(--up);border-color:#1d4b39;background:#0d231b}
+  .tag.down{color:var(--down);border-color:#4b1d28;background:#230d13}
+  .tag.gold{color:var(--gold);border-color:#4b3a1d;background:#231a0d}
+  .tag.void{color:var(--void);border-color:#33274b;background:#181223}
+  .tag.live{color:var(--accent);border-color:#1d3350;background:#0d1623}
+  .pos{color:var(--up)}.neg{color:var(--down)}.gld{color:var(--gold)}
+
+  /* ledger / audit */
+  .ledger{padding:16px 18px}
+  .step{display:grid;grid-template-columns:22px 1fr;gap:12px;padding:11px 0;border-bottom:1px dashed #1a2028}
+  .step:last-child{border-bottom:0}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line2);margin-top:6px;justify-self:center}
+  .dot.on{background:var(--up);box-shadow:0 0 0 3px #3ddc9722}
+  .dot.warn{background:var(--gold);box-shadow:0 0 0 3px #ffc86122}
+  .step .t{font-size:13px}
+  .step .d{font-size:11.5px;color:var(--dim2);font-family:var(--mono);margin-top:3px;word-break:break-all}
+
+  .banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:10px;
+    border:1px solid #4b3a1d;background:#171309;margin:0 0 16px}
+  .banner.info{border-color:#1d3350;background:#0a1220}
+  .banner b{color:var(--gold)}
+  .banner.info b{color:var(--accent)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.grid2{grid-template-columns:1fr}.q{max-width:180px}}
+
+  .note{font-size:12px;color:var(--dim2);padding:12px 18px;border-top:1px solid var(--line);background:#0b0e13}
+  .loading{display:flex;align-items:center;gap:10px;padding:26px 18px;color:var(--dim);font-size:13px}
+  .spin{width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:s 0.7s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  footer{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--dim2);font-size:12px;margin-top:26px}
+  .err{color:var(--down);font-family:var(--mono);font-size:12px;padding:12px 18px}
+  code{font-family:var(--mono);font-size:12px;background:#151a22;padding:2px 5px;border-radius:4px;color:#c9d4e4}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="logo">
+      <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="#ffc861" stroke-width="1.4"/>
+        <path d="M7 15.5 L10.5 9 L14 13 L17 7.5" stroke="#3ddc97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="17" cy="7.5" r="1.9" fill="#ffc861"/>
+      </svg>
+      DreamDEX Reclaim
+    </div>
+    <span class="pill">Somnia Shannon · testnet 50312</span>
+    <div class="spacer"></div>
+    <nav>
+      <a href="#lookup">Lookup</a>
+      <a href="#how">How it resolves</a>
+      <a href="#network">Network</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <h1>You won. <em>You never collected.</em></h1>
+    <p class="lede">
+      DreamDEX Event Contracts settle on schedule and the settled market leaves the live list — so a winning
+      position quietly stops appearing anywhere in the UI. <b>Reclaim</b> scans any wallet's on-chain outcome
+      balances, finds every settled market still holding redeemable tokens, and shows exactly how each one
+      resolved before you sign a single batch redemption.
+    </p>
+
+    <div class="lookup" id="lookup">
+      <input id="addr" type="text" spellcheck="false" autocomplete="off"
+             placeholder="0x… paste any wallet address" />
+      <button class="btn" id="go">Scan wallet</button>
+      <button class="btn ghost" id="sdk">Cross-check on-chain</button>
+    </div>
+    <div class="chips" id="chips"><span class="sub" style="padding:5px 0">Try:</span></div>
+
+    <div class="stats" id="stats">
+      <div class="stat"><div class="k">Total unclaimed</div><div class="v gold" id="s-total">—</div><div class="n">tUSDC on testnet</div></div>
+      <div class="stat"><div class="k">Wallets affected</div><div class="v" id="s-wallets">—</div><div class="n">holding unclaimed winnings</div></div>
+      <div class="stat"><div class="k">Median claim</div><div class="v" id="s-median">—</div><div class="n">tUSDC per wallet</div></div>
+      <div class="stat"><div class="k">Holdings scanned</div><div class="v" id="s-rows">—</div><div class="n">non-zero outcome balances</div></div>
+      <div class="stat"><div class="k">Settlement latency</div><div class="v" id="s-latency">—</div><div class="n">median expiry → resolved</div></div>
+    </div>
+  </div>
+
+  <div id="result"></div>
+  <div id="audit"></div>
+
+  <section id="how">
+    <div class="grid2">
+      <div class="card">
+        <h2>How a market resolves <span class="count">permissionless</span></h2>
+        <div class="ledger">
+          <div class="step"><span class="dot on"></span><div><div class="t">Oracle answer is posted</div>
+            <div class="d">price sources report, the median is taken, the interval is chosen</div></div></div>
+          <div class="step"><span class="dot on"></span><div><div class="t">Reactivity delivers it to the OracleHub</div>
+            <div class="d">no keeper, no cron — the chain invokes the callback</div></div></div>
+          <div class="step"><span class="dot on"></span><div><div class="t">Market flips to Resolved and finalizes</div>
+            <div class="d">payout vector is written; redemption opens immediately</div></div></div>
+          <div class="step"><span class="dot warn"></span><div><div class="t">The market leaves the live list</div>
+            <div class="d">loadMarkets() skips finalized binaries — this is where winnings go missing</div></div></div>
+          <div class="step"><span class="dot on"></span><div><div class="t">Winner redeems 1 collateral per contract</div>
+            <div class="d">settlement fee is 0 on dreamDEX, so winners get 1:1</div></div></div>
+        </div>
+        <div class="note">Each market's settlement question is reachable through its <code>OracleBind</code>, so
+          Reclaim deep-links every row to the oracle explorer and the resolution can be audited source by source.</div>
+      </div>
+
+      <div class="card">
+        <h2>Two read paths, cross-checked <span class="count">by design</span></h2>
+        <div class="ledger">
+          <div class="step"><span class="dot on"></span><div><div class="t">Fast path — indexer GraphQL</div>
+            <div class="d">dev.smk.somnia.host · OutcomeBalance ⋈ Market · ~1-2s</div></div></div>
+          <div class="step"><span class="dot on"></span><div><div class="t">Authority — markets-sdk</div>
+            <div class="d">client.getClaimable(account) reads the chain directly · ~30s for a heavy wallet</div></div></div>
+          <div class="step"><span class="dot on"></span><div><div class="t">Write path — trader.redeemMany</div>
+            <div class="d">one batched transaction for every claimable leg, voided legs included</div></div></div>
+        </div>
+        <div class="note">The SDK's <code>getClaimable</code> output is already shaped as <code>redeemMany</code>
+          input. Reclaim shows you that exact payload before anything is signed.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="network">
+    <div class="card">
+      <h2>Network-wide unclaimed winnings <span class="count" id="net-count"></span></h2>
+      <div id="net-body"><div class="loading"><span class="spin"></span>Scanning every non-zero outcome balance on testnet…</div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  Built for the Somnia × DreamDEX Event Contracts Hackathon. Read-only against the public testnet indexer;
+  nothing is signed without a configured key. Event Contract data via <code>@somnia-chain/markets-sdk</code>.
+</footer>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const fmtUsd = (n) => n >= 1000 ? n.toLocaleString(undefined,{maximumFractionDigits:0}) : n.toFixed(2);
+const fmtC  = (n) => n.toLocaleString(undefined,{maximumFractionDigits:2});
+const short = (a) => a ? a.slice(0,6)+"…"+a.slice(-4) : "—";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ago = (ts) => { if(!ts) return "—"; const s = Math.max(0, Math.floor(Date.now()/1000 - ts));
+  if (s < 60) return s+"s ago"; if (s < 3600) return Math.floor(s/60)+"m ago";
+  if (s < 86400) return Math.floor(s/3600)+"h ago"; return Math.floor(s/86400)+"d ago"; };
+
+async function jget(url){
+  const r = await fetch(url);
+  const b = await r.json();
+  if (!r.ok) throw new Error(b.error || r.statusText);
+  return b;
+}
+
+/* ------------------------------ network ------------------------------ */
+async function loadNetwork(){
+  try{
+    const d = await jget("/api/network");
+    $("#s-total").textContent = fmtUsd(d.totalClaimableUsd);
+    $("#s-wallets").textContent = d.addressesWithClaims.toLocaleString();
+    $("#s-median").textContent = fmtUsd(d.medianClaimUsd);
+    $("#s-rows").textContent = d.scannedRows.toLocaleString();
+    $("#net-count").textContent = d.addressesWithClaims.toLocaleString()+" wallets · scanned "+ago(Math.floor(new Date(d.scannedAt)/1000));
+    const rows = d.top.map((e,i)=>`<tr>
+        <td class="sub">${String(i+1).padStart(2,"0")}</td>
+        <td><span class="mono">${esc(e.account)}</span></td>
+        <td class="num gld">${fmtUsd(e.claimableUsd)}</td>
+        <td class="num">${e.claimableMarkets.toLocaleString()}</td>
+        <td class="num">${e.legs.toLocaleString()}</td>
+        <td class="num">${e.liveMarkets ? e.liveMarkets+" live" : "—"}</td>
+        <td class="num"><button class="chip" data-load="${esc(e.account)}">scan →</button></td>
+      </tr>`).join("");
+    $("#net-body").innerHTML = `<table><thead><tr>
+        <th></th><th>Wallet</th><th class="num">Unclaimed tUSDC</th><th class="num">Settled markets</th>
+        <th class="num">Winning legs</th><th class="num">Live now</th><th class="num"></th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      <div class="note">Excludes Hardhat/Anvil test accounts. Collateral is tUSDC (6 decimals) — testnet money,
+      real on-chain positions.</div>`;
+    document.querySelectorAll("[data-load]").forEach(b => b.onclick = () => scan(b.dataset.load));
+    $("#chips").innerHTML = '<span class="sub" style="padding:5px 0">Try:</span>' +
+      d.top.slice(0,4).map(e=>`<span class="chip" data-load="${esc(e.account)}">${short(e.account)}</span>`).join("");
+    document.querySelectorAll("#chips [data-load]").forEach(b => b.onclick = () => scan(b.dataset.load));
+  }catch(err){
+    $("#net-body").innerHTML = `<div class="err">network scan failed: ${esc(err.message)}</div>`;
+  }
+}
+
+/* ------------------------------- wallet ------------------------------- */
+async function scan(address){
+  address = (address || $("#addr").value).trim().toLowerCase();
+  if(!/^0x[0-9a-f]{40}$/.test(address)){ $("#result").innerHTML = `<div class="card"><div class="err">that is not a 0x… 40-hex-char address</div></div>`; return; }
+  $("#addr").value = address;
+  $("#result").innerHTML = `<div class="card"><div class="loading"><span class="spin"></span>Scanning ${esc(address)} across every Event Contract market…</div></div>`;
+  $("#result").scrollIntoView({behavior:"smooth", block:"start"});
+  try{
+    const d = await jget("/api/address?address="+address);
+    renderWallet(d);
+  }catch(err){
+    $("#result").innerHTML = `<div class="card"><div class="err">${esc(err.message)}</div></div>`;
+  }
+}
+
+function renderWallet(d){
+  const t = d.totals;
+  const banner = t.claimableUsd > 0
+    ? `<div class="banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex:0 0 auto;margin-top:1px">
+        <circle cx="12" cy="12" r="10" stroke="#ffc861" stroke-width="1.5"/>
+        <path d="M12 8v5" stroke="#ffc861" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.4" r="1.1" fill="#ffc861"/></svg>
+       <div><b>${fmtUsd(t.claimableUsd)} tUSDC unclaimed</b> across ${t.claimableMarkets} settled market${t.claimableMarkets===1?"":"s"}
+       (${t.claimableLegs} winning leg${t.claimableLegs===1?"":"s"}). These are redeemable right now and will not appear in any market list.</div></div>`
+    : `<div class="banner info"><div><b>Nothing unclaimed.</b> Every settled position on this wallet has already been redeemed
+       (${d.alreadyClaimed.redemptions} redemption${d.alreadyClaimed.redemptions===1?"":"s"} on record).</div></div>`;
+
+  const summary = `<div class="stats" style="margin:0 0 16px">
+    <div class="stat"><div class="k">Unclaimed</div><div class="v gold">${fmtUsd(t.claimableUsd)}</div><div class="n">tUSDC · ${t.claimableMarkets} markets</div></div>
+    <div class="stat"><div class="k">Live exposure</div><div class="v">${fmtC(t.liveContracts)}</div><div class="n">contracts · ${t.liveMarkets} markets open</div></div>
+    <div class="stat"><div class="k">Already claimed</div><div class="v">${fmtUsd(d.alreadyClaimed.usd)}</div><div class="n">tUSDC · ${d.alreadyClaimed.redemptions} redemptions</div></div>
+    <div class="stat"><div class="k">Leg win rate</div><div class="v">${t.winRate==null?"—":(t.winRate*100).toFixed(0)+"%"}</div><div class="n">${t.winLegs} won / ${t.lossLegs} lost</div></div>
+  </div>`;
+
+  const claims = d.claimableRows.length ? `<div class="card">
+      <h2><span class="tag gold">CLAIMABLE</span> Unclaimed winnings <span class="count">${d.claimableRows.length} legs · ${fmtUsd(t.claimableUsd)} tUSDC</span></h2>
+      <table><thead><tr><th>Market</th><th>Side</th><th class="num">Contracts</th><th class="num">Payout/contract</th>
+        <th class="num">Value</th><th>Settled</th><th class="num">Audit</th></tr></thead><tbody>
+      ${d.claimableRows.slice(0,60).map(c=>`<tr class="rowlink" data-mid="${esc(c.marketId)}" title="open settlement audit">
+        <td><span class="q" title="${esc(c.question)}">${esc(c.question||c.marketId)}</span></td>
+        <td><span class="tag ${c.outcomeIdx===0?"up":"down"}">${c.outcome}</span></td>
+        <td class="num">${fmtC(c.contracts)}</td>
+        <td class="num">${(c.perContract ?? 0).toFixed(3)}</td>
+        <td class="num pos">${fmtUsd(c.value)}</td>
+        <td class="sub">${ago(c.expiry)}</td>
+        <td class="num">${c.oracleExplorer?`<a href="${c.oracleExplorer}" target="_blank" rel="noopener">audit ↗</a>`:"—"}</td>
+      </tr>`).join("")}
+      </tbody></table>
+      <div class="note">Every row is auditable — <code>audit ↗</code> opens the oracle explorer for that market's
+      question, showing each price source, its receipt, the median and the interval chosen. Redeem with one batched
+      <code>trader.redeemMany({ entries })</code> call; the entries are exactly what <code>client.getClaimable()</code>
+      returns. Set <code>PRIVATE_KEY</code> to execute — this build is read-only by default.</div>
+    </div>` : "";
+
+  const live = d.live.length ? `<div class="card">
+      <h2><span class="tag live">OPEN</span> Live positions <span class="count">${d.live.length} legs · ${t.liveMarkets} markets</span></h2>
+      <table><thead><tr><th>Market</th><th>Side</th><th class="num">Contracts</th><th>Closes</th></tr></thead><tbody>
+      ${d.live.slice(0,25).map(c=>`<tr>
+        <td><span class="q" title="${esc(c.question)}">${esc(c.question||c.marketId)}</span></td>
+        <td><span class="tag ${c.outcomeIdx===0?"up":"down"}">${c.outcome}</span></td>
+        <td class="num">${fmtC(c.contracts)}</td>
+        <td class="sub">${ago(c.expiry).replace(" ago","")||"—"} left</td>
+      </tr>`).join("")}</tbody></table></div>` : "";
+
+  const lost = t.lossLegs ? `<div class="card">
+      <h2>Settled against you <span class="count">${t.lossLegs} legs · ${fmtC(t.lostContracts)} contracts → 0</span></h2>
+      <div class="note">Redeeming a losing position succeeds and pays 0 — it does not revert. On a voided market both
+      legs pay 0.5, so both must be redeemed explicitly.</div></div>` : "";
+
+  $("#result").innerHTML = banner + summary + claims + (live?`<div style="height:16px"></div>`+live:"") + lost;
+  $("#audit").innerHTML = "";
+  document.querySelectorAll("#result tr.rowlink").forEach(tr => {
+    tr.style.cursor = "pointer";
+    tr.onclick = () => audit(tr.dataset.mid);
+  });
+}
+
+/* --------------------------- resolution audit --------------------------- */
+async function audit(marketId){
+  const box = $("#audit");
+  box.innerHTML = `<div class="card" style="margin-top:16px"><div class="loading"><span class="spin"></span>Tracing settlement for ${esc(marketId.slice(0,10))}…</div></div>`;
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+  try{
+    const d = await jget("/api/resolution?marketId="+encodeURIComponent(marketId));
+    const ans = (d.oracleAnswers||[])[0];
+    const payout = d.payout;
+    const rows = [];
+    rows.push(`<div class="step"><span class="dot on"></span><div><div class="t">Question</div>
+      <div class="d">${esc(d.question||"—")}</div></div></div>`);
+    rows.push(`<div class="step"><span class="dot on"></span><div><div class="t">Oracle answer posted</div>
+      <div class="d">${ans ? "value "+esc(ans.numericValue)+" · interval \""+esc(ans.outcomeLabel||"—")+"\" · tx "+esc((ans.txHash||"").slice(0,18))+"…" : "no answer row indexed"}
+      ${ans&&ans.voided?` · <span style="color:var(--void)">VOIDED reason ${esc(ans.voidReason)}</span>`:""}</div></div></div>`);
+    rows.push(`<div class="step"><span class="dot on"></span><div><div class="t">Reactivity delivered it to the OracleHub</div>
+      <div class="d">question #${esc(d.questionNumber ?? "—")} · ${d.resolutionCost.measuredGas?d.resolutionCost.measuredGas.toLocaleString()+" gas":"gas n/a"}${d.resolutionCost.chargedSOMI!=null?` · ${d.resolutionCost.chargedSOMI.toFixed(6)} SOMI charged`:""}</div></div></div>`);
+    rows.push(`<div class="step"><span class="dot ${d.voided?"warn":"on"}"></span><div><div class="t">Market ${d.voided?"VOIDED":"RESOLVED"} — payout vector written</div>
+      <div class="d">Up ${payout.up} · Down ${payout.down} · winning outcome ${d.winningOutcome==null?"—":(d.winningOutcome===0?"Up":"Down")} · settled in ${d.settlementLatencySec==null?"—":d.settlementLatencySec+"s"}</div></div></div>`);
+    rows.push(`<div class="step"><span class="dot on"></span><div><div class="t">Redemption open</div>
+      <div class="d">winners redeem 1 collateral per contract · settlement fee 0 on dreamDEX</div></div></div>`);
+    box.innerHTML = `<div class="card" style="margin-top:16px">
+      <h2>Settlement audit <span class="count">${d.oracleExplorer?`<a href="${d.oracleExplorer}" target="_blank" rel="noopener">oracle explorer ↗</a>`:""}</span></h2>
+      <div class="ledger">${rows.join("")}</div>
+      <div class="note">Question number comes from <code>OracleBind</code>, not from <code>Market.oracleQuestionId</code>
+      (a 77-digit 256-bit questionKey — the explorer needs the counter). Full write-up in SDK-FEEDBACK.md.</div>
+    </div>`;
+  }catch(err){
+    box.innerHTML = `<div class="card" style="margin-top:16px"><div class="err">audit failed: ${esc(err.message)}</div></div>`;
+  }
+}
+
+/* --------------------------- on-chain check --------------------------- */
+async function sdkCheck(){
+  const address = $("#addr").value.trim().toLowerCase();
+  if(!/^0x[0x0-9a-f]{40}$/.test(address) && !/^0x[0-9a-f]{40}$/.test(address)){ scan(); return; }
+  const box = document.createElement("div");
+  box.className = "card";
+  box.style.marginTop = "16px";
+  box.innerHTML = `<div class="loading"><span class="spin"></span>Reading the chain via markets-sdk <code>client.getClaimable()</code> — this is batched per position and takes ~30s for a heavy wallet…</div>`;
+  $("#result").prepend(box);
+  try{
+    const d = await jget("/api/sdk?address="+address);
+    const usd = Number(d.rawEstPayoutTotal)/1e6;
+    box.innerHTML = `<h2><span class="tag up">ON-CHAIN</span> SDK cross-check <span class="count">${d.ms} ms</span></h2>
+      <div class="ledger">
+        <div class="step"><span class="dot on"></span><div><div class="t">${d.count} claimable positions confirmed on-chain</div>
+          <div class="d">client.getClaimable("${esc(address)}") · est. payout ${fmtUsd(usd)} tUSDC raw</div></div></div>
+        <div class="step"><span class="dot ${d.signerReady?"on":"warn"}"></span><div><div class="t">redeemMany payload prepared (${d.plan.entries} entries)</div>
+          <div class="d">${d.signerReady?"signer configured — one transaction redeems all of them":"no PRIVATE_KEY set — plan only, nothing will be signed"}${d.plan.sampleEntry?` · first entry {marketId ${esc(String(d.plan.sampleEntry.marketId).slice(0,14))}…, outcomeIdx ${d.plan.sampleEntry.outcomeIdx}, amount ${esc(String(d.plan.sampleEntry.amount))}}`:""}</div></div></div>
+      </div>
+      <div class="note">Indexer read ≈1-2s for the same answer. That 20× gap is why Reclaim uses the indexer for
+      discovery and the SDK for the claim.</div>`;
+  }catch(err){
+    box.innerHTML = `<div class="err">SDK check failed: ${esc(err.message)}</div>`;
+  }
+}
+
+$("#go").onclick = () => scan();
+$("#sdk").onclick = sdkCheck;
+$("#addr").addEventListener("keydown", e => { if(e.key === "Enter") scan(); });
+
+/* boot: real numbers, then a real wallet */
+loadNetwork().then(async () => {
+  try{
+    const d = await jget("/api/network");
+    if (d.top?.length) scan(d.top[0].account);
+  }catch(_){}
+});
+</script>
+</body>
+</html>
