@@ -24,9 +24,9 @@ This is not a corner case. Measured on Shannon testnet on 2026-09-11:
 | Metric | Value |
 |---|---|
 | Binary markets on testnet | 10,000+ (26 live, 9,974 finalized in the first page) |
-| Non-zero outcome-token holdings | **31,981** across **8,085** addresses |
-| Wallets holding unclaimed winnings | **6,895** |
-| Total unclaimed | **13,573,162 tUSDC** |
+| Non-zero outcome-token holdings | **31,981** across **8,081** addresses |
+| Wallets holding unclaimed winnings | **6,912** |
+| Total unclaimed | **13,588,395 tUSDC** |
 | Median claim | 2,400 tUSDC |
 | Settlement latency (expiry → resolved) | p50 **0s**, p90 1s, p99 6s |
 | Void rate | 0.12% (12 of 9,974) |
